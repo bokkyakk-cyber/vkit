@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vkit — 로그인</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#F0EFFF;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(123,114,255,0.12)}
+.logo{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:#7B72FF;margin-bottom:8px}
+h2{font-size:18px;font-weight:700;color:#1A1830;margin-bottom:4px}
+p{font-size:13px;color:#7B78A8;margin-bottom:28px}
+label{display:block;font-size:12px;font-weight:600;color:#7B78A8;margin-bottom:6px}
+input{width:100%;padding:11px 14px;border:1.5px solid #E8E6FF;border-radius:10px;font-size:14px;outline:none;margin-bottom:16px;transition:border-color .15s}
+input:focus{border-color:#7B72FF}
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px}
+.btn:hover{opacity:.9}
+.btn-outline{width:100%;padding:13px;background:transparent;color:#7B72FF;border:1.5px solid #7B72FF;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+.msg{font-size:13px;color:#e84040;margin-bottom:12px;text-align:center}
+.toggle{text-align:center;margin-top:16px;font-size:13px;color:#7B78A8}
+.toggle a{color:#7B72FF;cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Vkit</div>
+  <h2 id="form-title">로그인</h2>
+  <p id="form-sub">계정에 로그인하세요</p>
+  <div id="msg" class="msg" style="display:none"></div>
+  <label>이메일</label>
+  <input type="email" id="email" placeholder="hello@example.com">
+  <label>비밀번호</label>
+  <input type="password" id="password" placeholder="••••••••">
+  <button class="btn" onclick="submit()">로그인</button>
+  <div class="toggle">계정이 없으신가요? <a onclick="toggleMode()">회원가입</a></div>
+</div>
+<script>
+const SUPABASE_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let isLogin = true;
+
+function toggleMode() {
+  isLogin = !isLogin;
+  document.getElementById('form-title').textContent = isLogin ? '로그인' : '회원가입';
+  document.getElementById('form-sub').textContent = isLogin ? '계정에 로그인하세요' : '새 계정을 만드세요';
+  document.querySelector('.btn').textContent = isLogin ? '로그인' : '회원가입';
+  document.querySelector('.toggle').innerHTML = isLogin
+    ? '계정이 없으신가요? <a onclick="toggleMode()">회원가입</a>'
+    : '이미 계정이 있으신가요? <a onclick="toggleMode()">로그인</a>';
+}
+
+async function submit() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('msg');
+  msg.style.display = 'none';
+
+  if (!email || !password) { showMsg('이메일과 비밀번호를 입력해주세요'); return; }
+
+  if (isLogin) {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { showMsg('로그인 실패: ' + error.message); return; }
+    location.href = 'mypage.html';
+  } else {
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) { showMsg('가입 실패: ' + error.message); return; }
+    showMsg('가입 완료! 이메일을 확인해주세요 ✉️');
+  }
+}
+
+function showMsg(text) {
+  const msg = document.getElementById('msg');
+  msg.textContent = text;
+  msg.style.display = 'block';
+}
+</script>
+</body>
+</html>
