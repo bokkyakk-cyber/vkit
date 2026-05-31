@@ -769,6 +769,7 @@ function closeUploadModal(){toggleModal('upload-modal',false);}
 
 // ── Storage에 이미지 업로드 후 URL 반환 ──────────────
 async function uploadImageToStorage(dataUrl, path){
+  if(!dataUrl || !dataUrl.startsWith('data:')) return dataUrl; // URL이면 그대로 반환
   // base64 → Blob 변환 (fetch 대신 직접 변환)
   const arr = dataUrl.split(',');
   const mime = arr[0].match(/:(.*?);/)[1];
