@@ -756,16 +756,13 @@ const SUPABASE_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
 
 function openUploadModal(){
-  document.getElementById('up-title').value='';
-  document.getElementById('up-desc').value='';
-  document.getElementById('up-tags').value='';
-  document.getElementById('up-price').value='0';
   document.getElementById('up-status').style.display='none';
   document.getElementById('up-submit-btn').disabled=false;
   document.getElementById('up-submit-btn').innerHTML='<i class="ti ti-cloud-upload"></i> 새로 업로드';
-  document.getElementById('up-overwrite-btn').style.display='none';
   document.getElementById('up-overwrite-btn').disabled=false;
   document.getElementById('up-overwrite-btn').innerHTML='<i class="ti ti-refresh"></i> 덮어쓰기';
+  // 불러온 템플릿이 있으면 덮어쓰기 버튼 표시, 없으면 숨김
+  document.getElementById('up-overwrite-btn').style.display = currentTemplateId ? '' : 'none';
   toggleModal('upload-modal',true);
 }
 function closeUploadModal(){toggleModal('upload-modal',false);}
