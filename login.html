@@ -3,81 +3,410 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vkit — 로그인</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>로그인 — Vkit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root {
+  --violet:   #7B72FF;
+  --pink:     #FF6EC7;
+  --cyan:     #7EE6FF;
+  --lavender: #C7BFFF;
+  --bg:       #F0EFFF;
+  --card:     rgba(255,255,255,0.72);
+  --border:   rgba(180,170,255,0.28);
+  --text:     #1A1830;
+  --text-sub: #7B78A8;
+  --shadow:   rgba(123,114,255,0.16);
+  --glow-v:   rgba(123,114,255,0.22);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,sans-serif;background:#F0EFFF;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(123,114,255,0.12)}
-.logo{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:#7B72FF;margin-bottom:8px}
-h2{font-size:18px;font-weight:700;color:#1A1830;margin-bottom:4px}
-p{font-size:13px;color:#7B78A8;margin-bottom:28px}
-label{display:block;font-size:12px;font-weight:600;color:#7B78A8;margin-bottom:6px}
-input{width:100%;padding:11px 14px;border:1.5px solid #E8E6FF;border-radius:10px;font-size:14px;outline:none;margin-bottom:16px;transition:border-color .15s}
-input:focus{border-color:#7B72FF}
-.btn{width:100%;padding:13px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px}
-.btn:hover{opacity:.9}
-.btn-outline{width:100%;padding:13px;background:transparent;color:#7B72FF;border:1.5px solid #7B72FF;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
-.msg{font-size:13px;color:#e84040;margin-bottom:12px;text-align:center}
-.toggle{text-align:center;margin-top:16px;font-size:13px;color:#7B78A8}
-.toggle a{color:#7B72FF;cursor:pointer;font-weight:600}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Pretendard',-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* 배경 메시 */
+.bg-mesh{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 700px 500px at 80% -10%, rgba(123,114,255,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at -10% 60%, rgba(255,110,199,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 100%, rgba(126,230,255,0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #EDEAFF 0%, #F6F4FF 45%, #FFF0FA 100%);
+}
+
+/* 로그인 카드 */
+.login-wrap{
+  position:relative;z-index:1;
+  width:100%;max-width:420px;
+  padding:16px;
+}
+
+.login-card{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(28px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:28px;
+  padding:44px 40px 40px;
+  box-shadow:0 20px 60px rgba(123,114,255,0.12),0 4px 16px rgba(0,0,0,0.05);
+}
+
+/* 로고 */
+.login-logo{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  text-decoration:none;
+  font-family:'Nunito',sans-serif;
+  font-size:24px;font-weight:900;
+  color:var(--text);
+  letter-spacing:-0.5px;
+  margin-bottom:28px;
+}
+.logo-icon{
+  width:36px;height:36px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.login-title{
+  font-size:22px;font-weight:800;
+  color:var(--text);
+  text-align:center;
+  margin-bottom:6px;
+  letter-spacing:-0.4px;
+}
+.login-sub{
+  font-size:13px;color:var(--text-sub);
+  text-align:center;
+  margin-bottom:32px;
+  line-height:1.6;
+}
+
+/* 소셜 버튼 */
+.social-btns{
+  display:flex;flex-direction:column;gap:10px;
+  margin-bottom:24px;
+}
+.social-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:13px 20px;
+  border-radius:14px;
+  font-size:14px;font-weight:700;
+  cursor:pointer;
+  border:1px solid rgba(180,170,255,0.25);
+  background:rgba(255,255,255,0.8);
+  color:var(--text);
+  transition:all 0.2s;
+  font-family:'Pretendard',sans-serif;
+}
+.social-btn:hover{
+  background:#fff;
+  border-color:rgba(123,114,255,0.3);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(123,114,255,0.1);
+}
+.social-btn svg{flex-shrink:0}
+
+/* 구분선 */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:24px;
+}
+.divider::before,.divider::after{
+  content:'';flex:1;
+  height:1px;background:rgba(180,170,255,0.25);
+}
+.divider span{
+  font-size:12px;color:var(--text-sub);font-weight:600;
+  white-space:nowrap;
+}
+
+/* 이메일 폼 */
+.form-group{
+  display:flex;flex-direction:column;gap:6px;
+  margin-bottom:14px;
+}
+.form-label{
+  font-size:12px;font-weight:700;
+  color:var(--text-sub);letter-spacing:0.3px;
+}
+.form-input{
+  width:100%;padding:12px 16px;
+  border-radius:12px;
+  border:1px solid rgba(180,170,255,0.3);
+  background:rgba(255,255,255,0.7);
+  font-size:14px;font-weight:500;
+  color:var(--text);
+  font-family:'Pretendard',sans-serif;
+  outline:none;
+  transition:all 0.2s;
+}
+.form-input:focus{
+  border-color:var(--violet);
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(123,114,255,0.12);
+}
+.form-input::placeholder{color:rgba(123,120,168,0.45)}
+
+.btn-submit{
+  width:100%;padding:14px;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;
+  font-size:14px;font-weight:800;
+  border:none;cursor:pointer;
+  font-family:'Pretendard',sans-serif;
+  box-shadow:0 6px 20px var(--glow-v);
+  transition:all 0.22s;
+  margin-top:4px;
+  letter-spacing:0.2px;
+}
+.btn-submit:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px var(--glow-v);
+}
+.btn-submit:disabled{
+  opacity:0.6;cursor:not-allowed;transform:none;
+}
+
+/* 탭 (로그인/회원가입) */
+.tabs{
+  display:flex;
+  background:rgba(240,238,255,0.6);
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:28px;
+  gap:4px;
+}
+.tab{
+  flex:1;padding:9px;
+  border-radius:9px;
+  font-size:13px;font-weight:700;
+  color:var(--text-sub);
+  cursor:pointer;text-align:center;
+  border:none;background:transparent;
+  font-family:'Pretendard',sans-serif;
+  transition:all 0.18s;
+}
+.tab.active{
+  background:#fff;
+  color:var(--violet);
+  box-shadow:0 2px 8px rgba(123,114,255,0.12);
+}
+
+/* 에러/성공 메시지 */
+.msg{
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:13px;font-weight:600;
+  margin-bottom:14px;
+  display:none;
+}
+.msg.error{
+  background:rgba(255,80,80,0.08);
+  border:1px solid rgba(255,80,80,0.2);
+  color:#e84040;
+}
+.msg.success{
+  background:rgba(80,200,120,0.08);
+  border:1px solid rgba(80,200,120,0.2);
+  color:#2a9d5c;
+}
+.msg.show{display:block}
+
+/* 하단 링크 */
+.login-footer{
+  text-align:center;
+  margin-top:24px;
+  font-size:12px;color:var(--text-sub);
+}
+.login-footer a{
+  color:var(--violet);font-weight:700;
+  text-decoration:none;
+}
+.login-footer a:hover{text-decoration:underline}
+
+/* 비밀번호 찾기 */
+.forgot{
+  text-align:right;margin-top:-8px;margin-bottom:14px;
+}
+.forgot a{
+  font-size:12px;color:var(--text-sub);
+  text-decoration:none;font-weight:600;
+}
+.forgot a:hover{color:var(--violet)}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">Vkit</div>
-  <h2 id="form-title">로그인</h2>
-  <p id="form-sub">계정에 로그인하세요</p>
-  <div id="msg" class="msg" style="display:none"></div>
-  <label>이메일</label>
-  <input type="email" id="email" placeholder="hello@example.com">
-  <label>비밀번호</label>
-  <input type="password" id="password" placeholder="••••••••">
-  <button class="btn" onclick="submit()">로그인</button>
-  <div class="toggle">계정이 없으신가요? <a onclick="toggleMode()">회원가입</a></div>
+<div class="bg-mesh"></div>
+
+<div class="login-wrap">
+  <div class="login-card">
+
+    <!-- 로고 -->
+    <a href="index.html" class="login-logo">
+      <div class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 34 34" fill="none">
+          <rect width="34" height="34" rx="10" fill="url(#lBg)"/>
+          <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#lB)" opacity="0.85"/>
+          <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#lP)" opacity="0.9"/>
+          <circle cx="10" cy="22" r="3.5" fill="url(#lC)" opacity="0.8"/>
+          <defs>
+            <linearGradient id="lBg" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#EDE9FF"/><stop offset="1" stop-color="#F5F0FF"/></linearGradient>
+            <linearGradient id="lB" x1="10" y1="14" x2="24" y2="28"><stop stop-color="#7B72FF"/><stop offset="1" stop-color="#A5C8FF"/></linearGradient>
+            <linearGradient id="lP" x1="14" y1="8" x2="27" y2="21"><stop stop-color="#FF8ECF"/><stop offset="1" stop-color="#C7BFFF"/></linearGradient>
+            <linearGradient id="lC" x1="6.5" y1="18.5" x2="13.5" y2="25.5"><stop stop-color="#7EE6FF"/><stop offset="1" stop-color="#7B72FF"/></linearGradient>
+          </defs>
+        </svg>
+      </div>
+      Vkit
+    </a>
+
+    <!-- 탭 -->
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">로그인</button>
+      <button class="tab" id="tab-signup" onclick="switchTab('signup')">회원가입</button>
+    </div>
+
+    <!-- 소셜 로그인 -->
+    <div class="social-btns">
+      <button class="social-btn" onclick="loginWith('google')">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Google로 계속하기
+      </button>
+      <button class="social-btn" onclick="loginWith('twitter')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X(트위터)로 계속하기
+      </button>
+    </div>
+
+    <div class="divider"><span>또는 이메일로</span></div>
+
+    <!-- 메시지 -->
+    <div class="msg" id="msg"></div>
+
+    <!-- 이메일 폼 -->
+    <div id="form-login">
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input class="form-input" type="email" id="login-email" placeholder="hello@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input class="form-input" type="password" id="login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="forgot"><a href="#" onclick="forgotPassword()">비밀번호 찾기</a></div>
+      <button class="btn-submit" id="btn-login" onclick="doLogin()">로그인</button>
+    </div>
+
+    <div id="form-signup" style="display:none">
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input class="form-input" type="email" id="signup-email" placeholder="hello@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input class="form-input" type="password" id="signup-pw" placeholder="8자 이상 입력" onkeydown="if(event.key==='Enter')doSignup()">
+      </div>
+      <button class="btn-submit" id="btn-signup" onclick="doSignup()">회원가입</button>
+    </div>
+
+    <div class="login-footer">
+      <a href="index.html">← 홈으로 돌아가기</a>
+    </div>
+
+  </div>
 </div>
+
 <script>
-const SUPABASE_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_9DNDHgoIGTbqBdee8Qwh9w_dTEC_YBP';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SB_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
+const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
 
-let isLogin = true;
+// 이미 로그인된 경우 홈으로
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) location.href = 'index.html';
+});
 
-function toggleMode() {
-  isLogin = !isLogin;
-  document.getElementById('form-title').textContent = isLogin ? '로그인' : '회원가입';
-  document.getElementById('form-sub').textContent = isLogin ? '계정에 로그인하세요' : '새 계정을 만드세요';
-  document.querySelector('.btn').textContent = isLogin ? '로그인' : '회원가입';
-  document.querySelector('.toggle').innerHTML = isLogin
-    ? '계정이 없으신가요? <a onclick="toggleMode()">회원가입</a>'
-    : '이미 계정이 있으신가요? <a onclick="toggleMode()">로그인</a>';
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+  document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = isLogin ? 'none' : 'block';
+  hideMsg();
 }
 
-async function submit() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const msg = document.getElementById('msg');
-  msg.style.display = 'none';
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = `msg ${type} show`;
+}
+function hideMsg() {
+  document.getElementById('msg').className = 'msg';
+}
 
-  if (!email || !password) { showMsg('이메일과 비밀번호를 입력해주세요'); return; }
+async function loginWith(provider) {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: location.origin + '/index.html' }
+  });
+  if (error) showMsg(error.message, 'error');
+}
 
-  if (isLogin) {
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { showMsg('로그인 실패: ' + error.message); return; }
-    location.href = 'mypage.html';
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if (!email || !pw) return showMsg('이메일과 비밀번호를 입력해주세요', 'error');
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = '로그인 중...';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    showMsg('이메일 또는 비밀번호가 올바르지 않아요', 'error');
   } else {
-    const { error } = await sb.auth.signUp({ email, password });
-    if (error) { showMsg('가입 실패: ' + error.message); return; }
-    showMsg('가입 완료! 이메일을 확인해주세요 ✉️');
+    showMsg('로그인 성공! 이동 중...', 'success');
+    setTimeout(() => location.href = 'index.html', 800);
   }
+  btn.disabled = false; btn.textContent = '로그인';
 }
 
-function showMsg(text) {
-  const msg = document.getElementById('msg');
-  msg.textContent = text;
-  msg.style.display = 'block';
+async function doSignup() {
+  const email = document.getElementById('signup-email').value.trim();
+  const pw = document.getElementById('signup-pw').value;
+  if (!email || !pw) return showMsg('이메일과 비밀번호를 입력해주세요', 'error');
+  if (pw.length < 8) return showMsg('비밀번호는 8자 이상이어야 해요', 'error');
+
+  const btn = document.getElementById('btn-signup');
+  btn.disabled = true; btn.textContent = '가입 중...';
+
+  const { error } = await sb.auth.signUp({ email, password: pw });
+  if (error) {
+    showMsg(error.message, 'error');
+  } else {
+    showMsg('🎉 가입 완료! 이메일을 확인해주세요', 'success');
+  }
+  btn.disabled = false; btn.textContent = '회원가입';
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showMsg('이메일을 먼저 입력해주세요', 'error');
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: location.origin + '/reset-password.html'
+  });
+  if (error) showMsg(error.message, 'error');
+  else showMsg('비밀번호 재설정 이메일을 보냈어요 📧', 'success');
 }
 </script>
 </body>
