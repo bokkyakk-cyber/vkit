@@ -769,17 +769,21 @@ function closeUploadModal(){toggleModal('upload-modal',false);}
 
 // ── Storage에 이미지 업로드 후 URL 반환 ──────────────
 async function uploadImageToStorage(dataUrl, path){
-  if(!dataUrl || !dataUrl.startsWith('data:')) return dataUrl; // URL이면 그대로 반환
-  // base64 → Blob 변환 (fetch 대신 직접 변환)
-  const arr = dataUrl.split(',');
-  const mime = arr[0].match(/:(.*?);/)[1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while(n--){ u8arr[n] = bstr.charCodeAt(n); }
-  const blob = new Blob([u8arr], {type: mime});
-  const ext = mime === 'image/png' ? 'png' : 'jpg';
-  const fullPath = `${path}.${ext}`;
+  if(!dataUrl) return null;
+  if(!dataUrl.startsWith('data:')) return dataUrl; // 이미 URL이면 그대로
+  try {
+    const arr = dataUrl.split(',');
+    if(arr.length < 2) return null;
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if(!mimeMatch) return null;
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+    const blob = new Blob([u8arr], {type: mime});
+    const ext = mime === 'image/png' ? 'png' : 'jpg';
+    const fullPath = `${path}.${ext}`;
 
   const uploadRes = await fetch(
     `${SUPABASE_URL}/storage/v1/object/template-images/${fullPath}`,
@@ -800,6 +804,10 @@ async function uploadImageToStorage(dataUrl, path){
   }
   // public URL 반환
   return `${SUPABASE_URL}/storage/v1/object/public/template-images/${fullPath}`;
+  } catch(e) {
+    console.error('이미지 업로드 오류:', e);
+    return null;
+  }
 }
 
 // ── 레이어 이미지 + 배경 이미지 Storage 업로드 ──────
