@@ -3,18 +3,1190 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vkit</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Vkit — Design your V world</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-  body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0efff; }
-  .box { background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
-  h1 { color: #7B72FF; }
+:root {
+  --violet:   #7B72FF;
+  --pink:     #FF6EC7;
+  --cyan:     #7EE6FF;
+  --lavender: #C7BFFF;
+  --soft-pink:#FFE4F3;
+  --bg:       #F0EFFF;
+  --bg2:      #F8F7FF;
+  --card:     rgba(255,255,255,0.68);
+  --card-b:   rgba(255,255,255,0.85);
+  --border:   rgba(180,170,255,0.28);
+  --text:     #1A1830;
+  --text-sub: #7B78A8;
+  --shadow:   rgba(123,114,255,0.16);
+  --glow-v:   rgba(123,114,255,0.22);
+  --glow-p:   rgba(255,110,199,0.18);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Pretendard',-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── 배경 메시 ── */
+.bg-mesh{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 700px 500px at 80% -10%, rgba(123,114,255,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at -10% 60%, rgba(255,110,199,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 100%, rgba(126,230,255,0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #EDEAFF 0%, #F6F4FF 45%, #FFF0FA 100%);
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,4vw,48px);
+  background:rgba(245,243,255,0.62);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-bottom:1px solid rgba(255,255,255,0.72);
+  box-shadow:0 1px 0 rgba(180,170,255,0.12);
+}
+
+/* 로고 */
+.nav-logo{
+  display:flex;align-items:center;gap:9px;
+  text-decoration:none;
+  font-family:'Nunito',sans-serif;
+  font-size:22px;font-weight:900;
+  color:var(--text);
+  letter-spacing:-0.5px;
+  flex-shrink:0;
+}
+.logo-icon{
+  width:34px;height:34px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:visible;
+}
+
+/* 네비 링크 */
+.nav-center{
+  display:flex;align-items:center;gap:4px;
+  position:absolute;left:50%;transform:translateX(-50%);
+}
+.nav-center a{
+  font-size:14px;font-weight:600;
+  color:var(--text-sub);
+  text-decoration:none;
+  padding:6px 14px;
+  border-radius:8px;
+  transition:all 0.18s;
+  white-space:nowrap;
+}
+.nav-center a:hover{background:rgba(123,114,255,0.08);color:var(--violet)}
+
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-search{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.8);
+  border-radius:10px;
+  padding:7px 14px;
+  font-size:13px;color:var(--text-sub);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.nav-search:hover{background:rgba(255,255,255,0.9);border-color:var(--border)}
+.nav-search svg{opacity:0.5}
+.nav-btn{
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;
+  padding:8px 20px;
+  border-radius:10px;
+  font-size:13px;font-weight:700;
+  text-decoration:none;
+  border:none;cursor:pointer;
+  box-shadow:0 4px 16px var(--glow-v);
+  transition:all 0.2s;
+  white-space:nowrap;
+}
+.nav-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px var(--glow-v)}
+
+/* 햄버거 */
+.nav-ham{
+  display:none;flex-direction:column;gap:5px;
+  cursor:pointer;padding:6px;border-radius:8px;
+  border:none;background:transparent;
+}
+.nav-ham span{
+  display:block;width:22px;height:2px;
+  background:var(--text-sub);border-radius:2px;
+  transition:all 0.25s;
+}
+
+/* 모바일 드로어 */
+.mobile-drawer{
+  display:none;
+  position:fixed;top:64px;left:0;right:0;z-index:190;
+  background:rgba(245,243,255,0.96);
+  backdrop-filter:blur(28px);
+  border-bottom:1px solid rgba(255,255,255,0.7);
+  padding:16px clamp(16px,4vw,48px) 20px;
+  flex-direction:column;gap:4px;
+}
+.mobile-drawer.open{display:flex}
+.mobile-drawer a{
+  font-size:15px;font-weight:600;color:var(--text-sub);
+  text-decoration:none;padding:12px 0;
+  border-bottom:1px solid rgba(180,170,255,0.12);
+  transition:color 0.15s;
+}
+.mobile-drawer a:last-of-type{border-bottom:none}
+.mobile-drawer a:hover{color:var(--violet)}
+.mobile-drawer .m-btn{
+  margin-top:8px;
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;text-align:center;
+  padding:13px;border-radius:10px;font-weight:700;
+  font-size:14px;border-bottom:none;
+}
+
+/* ── HERO ── */
+.hero{
+  position:relative;z-index:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  gap:40px;
+  padding:calc(64px + 48px) clamp(20px,5vw,80px) 48px;
+  max-width:1280px;margin:0 auto;
+}
+.hero-left{}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.65);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.8);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:11px;font-weight:800;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--violet);
+  margin-bottom:22px;
+  box-shadow:0 2px 12px rgba(123,114,255,0.1);
+}
+.hero-badge::before{
+  content:'✦';font-size:10px;
+}
+.hero h1{
+  font-family:'Pretendard',sans-serif;
+  font-size:clamp(28px,4.4vw,50px);
+  font-weight:800;
+  line-height:1.18;
+  letter-spacing:-1px;
+  color:var(--text);
+  margin-bottom:18px;
+}
+.hero h1 .gradient-text{
+  background:linear-gradient(120deg,var(--violet) 0%,var(--pink) 60%,var(--cyan) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero p{
+  font-size:15px;color:var(--text-sub);
+  line-height:1.85;margin-bottom:36px;font-weight:400;
+  max-width:400px;
+}
+.hero-btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,var(--violet),#9B8BF4);
+  color:#fff;padding:13px 28px;
+  border-radius:12px;font-size:14px;font-weight:700;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 6px 24px var(--glow-v);
+  transition:all 0.22s;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px var(--glow-v)}
+.btn-primary svg{transition:transform 0.2s}
+.btn-primary:hover svg{transform:translateX(3px)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(12px);
+  color:var(--violet);padding:13px 24px;
+  border-radius:12px;font-size:14px;font-weight:700;
+  text-decoration:none;
+  border:1px solid rgba(255,255,255,0.85);
+  cursor:pointer;transition:all 0.22s;
+}
+.btn-secondary:hover{background:#fff;border-color:rgba(123,114,255,0.3);transform:translateY(-2px)}
+
+
+
+/* 히어로 목업 */
+.hero-right{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.mockup-wrap{
+  position:relative;
+  width:100%;max-width:520px;
+}
+.mockup-main{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(24px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:24px;
+  padding:20px;
+  box-shadow:0 20px 60px rgba(123,114,255,0.18),0 4px 16px rgba(0,0,0,0.06);
+  overflow:hidden;
+}
+.mockup-topbar{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;
+}
+.mockup-dots{display:flex;gap:5px}
+.mockup-dots span{
+  width:8px;height:8px;border-radius:50%;
+}
+.dot-r{background:#FF6B6B}
+.dot-y{background:#FFD93D}
+.dot-g{background:#6BCB77}
+.mockup-title-bar{
+  flex:1;
+  background:rgba(240,238,255,0.8);
+  border-radius:6px;
+  height:22px;
+  display:flex;align-items:center;
+  padding:0 10px;
+  font-size:10px;color:var(--text-sub);font-weight:600;
+}
+.live-badge{
+  background:linear-gradient(135deg,#FF6B6B,#FF4757);
+  color:#fff;font-size:9px;font-weight:800;
+  padding:2px 8px;border-radius:10px;letter-spacing:0.5px;
+}
+.mockup-content{
+  background:linear-gradient(160deg,#1a1040 0%,#2d1b69 50%,#1a0a3d 100%);
+  border-radius:16px;
+  padding:18px;
+  min-height:180px;
+  position:relative;
+  overflow:hidden;
+}
+/* 배경 별 */
+.star{
+  position:absolute;border-radius:50%;
+  background:#fff;animation:twinkle 2s ease-in-out infinite;
+}
+.star:nth-child(1){width:3px;height:3px;top:15%;left:20%;animation-delay:0s}
+.star:nth-child(2){width:2px;height:2px;top:30%;left:70%;animation-delay:0.5s}
+.star:nth-child(3){width:4px;height:4px;top:60%;left:40%;animation-delay:1s}
+.star:nth-child(4){width:2px;height:2px;top:20%;left:85%;animation-delay:1.5s}
+.star:nth-child(5){width:3px;height:3px;top:75%;left:15%;animation-delay:0.8s}
+@keyframes twinkle{0%,100%{opacity:0.3}50%{opacity:1}}
+
+/* 달 */
+.moon{
+  position:absolute;right:20px;top:15px;
+  width:50px;height:50px;
+  background:linear-gradient(135deg,#FFD580,#FFA500);
+  border-radius:50%;
+  box-shadow:0 0 20px rgba(255,200,80,0.4);
+}
+.moon::after{
+  content:'';position:absolute;
+  width:38px;height:38px;
+  background:linear-gradient(135deg,#1a1040,#2d1b69);
+  border-radius:50%;
+  top:2px;left:-6px;
+}
+
+.mockup-live-label{
+  position:absolute;top:14px;left:16px;
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:8px;
+  padding:4px 10px;
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;color:#fff;font-weight:700;
+}
+.live-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#FF4757;
+  animation:pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+
+/* 구름들 */
+.cloud{
+  position:absolute;
+  background:linear-gradient(135deg,rgba(199,191,255,0.35),rgba(255,110,199,0.2));
+  border-radius:50%;
+  filter:blur(18px);
+}
+.cloud1{width:80px;height:50px;bottom:30px;left:20px}
+.cloud2{width:60px;height:40px;bottom:20px;left:60px}
+.cloud3{width:100px;height:60px;bottom:20px;right:10px;background:linear-gradient(135deg,rgba(126,230,255,0.25),rgba(199,191,255,0.3))}
+
+/* 떠있는 카드들 */
+.float-mockup{
+  position:absolute;
+  background:rgba(255,255,255,0.78);
+  backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.92);
+  border-radius:16px;
+  box-shadow:0 8px 32px rgba(123,114,255,0.15);
+  animation:floatY 5s ease-in-out infinite;
+}
+
+/* 스케줄 카드 */
+.schedule-card{
+  bottom:-20px;left:-30px;
+  padding:14px 16px;width:200px;
+  animation-delay:0s;
+}
+.sched-title{
+  font-size:11px;font-weight:800;color:var(--text);
+  margin-bottom:10px;letter-spacing:0.3px;
+}
+.sched-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;
+  border-bottom:1px solid rgba(180,170,255,0.12);
+}
+.sched-row:last-child{border-bottom:none}
+.sched-day{
+  font-size:9px;font-weight:800;
+  color:var(--violet);
+  width:28px;
+}
+.sched-icon{font-size:12px}
+.sched-text{font-size:11px;font-weight:600;color:var(--text)}
+
+/* 채팅 카드 */
+.chat-card{
+  top:10px;right:-30px;
+  padding:12px 14px;width:180px;
+  animation-delay:1.8s;
+}
+.chat-title{
+  font-size:11px;font-weight:800;color:var(--text);
+  margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;
+}
+.chat-online{
+  width:6px;height:6px;border-radius:50%;
+  background:#6BCB77;display:inline-block;
+}
+.chat-msg{
+  font-size:10px;color:var(--text-sub);
+  padding:4px 0;
+  border-bottom:1px solid rgba(180,170,255,0.1);
+  line-height:1.4;
+}
+.chat-msg:last-child{border-bottom:none}
+.chat-msg strong{color:var(--violet);font-weight:700}
+
+@keyframes floatY{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+
+/* ── SECTION 공통 ── */
+.section-wrap{
+  position:relative;z-index:1;
+  padding:90px clamp(20px,5vw,80px);
+  max-width:1280px;margin:0 auto;
+}
+.section-label{
+  font-size:11px;font-weight:800;
+  letter-spacing:2.5px;color:var(--violet);
+  text-transform:uppercase;margin-bottom:10px;
+}
+.section-title{
+  font-size:clamp(26px,3.5vw,38px);
+  font-weight:800;letter-spacing:-0.5px;
+  color:var(--text);margin-bottom:10px;line-height:1.3;
+}
+.section-sub{
+  font-size:15px;color:var(--text-sub);
+  font-weight:400;line-height:1.75;max-width:480px;
+}
+
+/* ── TEMPLATES ── */
+/* 카테고리 탭 */
+.category-row{
+  display:flex;align-items:center;gap:8px;
+  margin:36px 0 28px;
+  flex-wrap:nowrap;overflow-x:auto;
+  padding-bottom:2px;
+  scrollbar-width:none;
+}
+.category-row::-webkit-scrollbar{display:none}
+.cat-tab{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;
+  border-radius:12px;
+  font-size:13px;font-weight:700;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.75);
+  background:rgba(255,255,255,0.55);
+  backdrop-filter:blur(12px);
+  color:var(--text-sub);
+  transition:all 0.2s;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.cat-tab .cat-icon{font-size:15px}
+.cat-tab.active,.cat-tab:hover{
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 16px var(--glow-v);
+}
+
+/* 템플릿 그리드 */
+.template-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
+}
+.template-card{
+  background:rgba(255,255,255,0.68);
+  backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(255,255,255,0.85);
+  border-radius:20px;
+  overflow:hidden;
+  transition:all 0.28s;
+  cursor:pointer;
+  box-shadow:0 2px 12px rgba(123,114,255,0.06);
+}
+.template-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 16px 40px var(--glow-v),0 4px 12px rgba(0,0,0,0.06);
+  border-color:rgba(123,114,255,0.3);
+}
+
+/* 썸네일 영역 — 이미지 교체 가능 구조 */
+.template-thumb{
+  width:100%;aspect-ratio:16/10;
+  position:relative;overflow:hidden;
+  background:#f0eeff;
+  display:flex;align-items:center;justify-content:center;
+}
+.template-thumb img{
+  width:100%;height:100%;object-fit:cover;
+  display:block;
+}
+/* 이미지 없을 때 플레이스홀더 */
+.thumb-placeholder{
+  width:100%;height:100%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:8px;
+}
+.thumb-placeholder .ph-icon{font-size:28px;opacity:0.4}
+.thumb-placeholder .ph-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  opacity:0.35;
+}
+/* 썸네일 타입별 배경 */
+.thumb-schedule .thumb-placeholder{background:linear-gradient(135deg,#1a1040,#2d1b69)}
+.thumb-schedule .thumb-placeholder .ph-icon,.thumb-schedule .thumb-placeholder .ph-label{color:#C7BFFF}
+.thumb-thumbnail .thumb-placeholder{background:linear-gradient(135deg,#0a0a2e,#1a1060)}
+.thumb-thumbnail .thumb-placeholder .ph-icon,.thumb-thumbnail .thumb-placeholder .ph-label{color:#7EE6FF}
+.thumb-poster .thumb-placeholder{background:linear-gradient(135deg,#1a0a30,#3d1060)}
+.thumb-poster .thumb-placeholder .ph-icon,.thumb-poster .thumb-placeholder .ph-label{color:#FF6EC7}
+.thumb-banner .thumb-placeholder{background:linear-gradient(135deg,#001a2e,#003060)}
+.thumb-banner .thumb-placeholder .ph-icon,.thumb-banner .thumb-placeholder .ph-label{color:#7EE6FF}
+
+/* BEST/NEW 배지 */
+.thumb-badge{
+  position:absolute;top:10px;left:10px;
+  font-size:9px;font-weight:900;
+  padding:3px 9px;border-radius:8px;
+  letter-spacing:0.8px;text-transform:uppercase;
+  z-index:2;
+}
+.badge-best{background:linear-gradient(135deg,var(--violet),#A78BFA);color:#fff}
+.badge-new{background:linear-gradient(135deg,var(--pink),#FF8ECF);color:#fff}
+
+/* 호버 오버레이 */
+.thumb-overlay{
+  position:absolute;inset:0;
+  background:rgba(30,20,80,0);
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.28s;
+  z-index:3;
+}
+.template-card:hover .thumb-overlay{background:rgba(30,20,80,0.25)}
+.preview-btn{
+  background:rgba(255,255,255,0.95);
+  color:var(--violet);
+  padding:8px 20px;border-radius:20px;
+  font-size:12px;font-weight:800;
+  opacity:0;transform:translateY(8px);
+  transition:all 0.25s;
+  border:none;cursor:pointer;
+}
+.template-card:hover .preview-btn{opacity:1;transform:translateY(0)}
+
+/* 카드 정보 */
+.template-info{padding:16px 18px 18px}
+.template-cat{
+  font-size:10px;font-weight:800;
+  letter-spacing:1.8px;color:var(--violet);
+  text-transform:uppercase;margin-bottom:5px;
+}
+.template-name{
+  font-size:14px;font-weight:700;
+  color:var(--text);margin-bottom:5px;
+}
+.template-desc{
+  font-size:12px;color:var(--text-sub);
+  line-height:1.65;margin-bottom:14px;
+}
+.template-footer{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.template-price{
+  font-size:17px;font-weight:800;color:var(--violet);
+  letter-spacing:-0.3px;
+}
+.template-price span{
+  font-size:12px;font-weight:500;
+  color:var(--text-sub);margin-left:1px;
+}
+.cart-btn{
+  display:flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;padding:7px 14px;
+  border-radius:10px;font-size:12px;font-weight:700;
+  border:none;cursor:pointer;
+  transition:all 0.2s;
+  box-shadow:0 2px 10px var(--glow-v);
+}
+.cart-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--glow-v)}
+
+/* ── FEATURES ── */
+.features-section{
+  background:rgba(255,255,255,0.4);
+  backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,0.7);
+  border-bottom:1px solid rgba(255,255,255,0.7);
+}
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:14px;margin-top:44px;
+}
+.feature-card{
+  background:rgba(255,255,255,0.65);
+  backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:18px;padding:24px 20px;
+  transition:all 0.25s;
+}
+.feature-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 32px var(--glow-v);
+  border-color:rgba(123,114,255,0.2);
+}
+.feature-icon{
+  width:42px;height:42px;
+  background:linear-gradient(135deg,rgba(123,114,255,0.12),rgba(199,191,255,0.18));
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;margin-bottom:14px;
+  border:1px solid rgba(123,114,255,0.1);
+}
+.feature-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:7px}
+.feature-desc{font-size:12px;color:var(--text-sub);line-height:1.7}
+
+/* ── PURCHASE ── */
+/* purchase 새 레이아웃 */
+.purchase-steps-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-top:44px;
+  margin-bottom:36px;
+}
+.purchase-step-card{
+  background:rgba(255,255,255,0.68);
+  backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:20px;
+  padding:28px 24px;
+  position:relative;
+  box-shadow:0 4px 20px rgba(123,114,255,0.07);
+}
+.step-num{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;
+  margin-bottom:14px;
+  box-shadow:0 3px 10px var(--glow-v);
+}
+.step-icon{font-size:22px;margin-bottom:10px}
+.step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
+.step-desc{font-size:12px;color:var(--text-sub);line-height:1.7}
+
+/* 화살표 */
+.purchase-step-card::after{
+  content:'→';
+  position:absolute;top:50%;right:-14px;transform:translateY(-50%);
+  font-size:18px;color:var(--lavender);
+  z-index:2;
+}
+.purchase-step-card:last-child::after{display:none}
+
+/* 토스 결제 CTA 박스 */
+.toss-cta-box{
+  background:linear-gradient(135deg,rgba(123,114,255,0.08),rgba(199,191,255,0.12));
+  border:1px solid rgba(123,114,255,0.18);
+  border-radius:20px;
+  padding:36px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.toss-cta-left{}
+.toss-cta-title{
+  font-size:18px;font-weight:800;color:var(--text);
+  margin-bottom:6px;letter-spacing:-0.3px;
+}
+.toss-cta-desc{font-size:13px;color:var(--text-sub);line-height:1.7}
+.toss-cta-note{
+  margin-top:10px;font-size:11px;color:var(--text-sub);
+  display:flex;align-items:center;gap:5px;
+}
+.toss-cta-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0}
+.toss-pay-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:#3282F6;
+  color:#fff;
+  padding:14px 28px;
+  border-radius:12px;
+  font-size:15px;font-weight:800;
+  border:none;cursor:pointer;
+  box-shadow:0 6px 24px rgba(50,130,246,0.3);
+  transition:all 0.22s;
+  white-space:nowrap;
+}
+.toss-pay-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(50,130,246,0.38)}
+.toss-logo{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--text-sub);font-weight:600;
+}
+.toss-logo-mark{
+  font-size:13px;font-weight:900;
+  background:linear-gradient(135deg,#3282F6,#5BA0FF);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.security-badges{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;
+}
+.sec-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,0.7);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:20px;padding:4px 10px;
+  font-size:11px;font-weight:600;color:var(--text-sub);
+}
+
+/* ── FOOTER ── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,0.65);
+  background:rgba(245,243,255,0.5);
+  backdrop-filter:blur(20px);
+  padding:36px clamp(20px,5vw,80px);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:20px;
+}
+.footer-left{}
+.footer-logo-row{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Nunito',sans-serif;
+  font-size:18px;font-weight:900;
+  color:var(--text);margin-bottom:4px;
+}
+.footer-desc{font-size:12px;color:var(--text-sub)}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{
+  font-size:12px;color:var(--text-sub);
+  text-decoration:none;transition:color 0.2s;
+  font-weight:500;
+}
+.footer-links a:hover{color:var(--violet)}
+
+/* ── 페이드인 ── */
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ── 모바일 ── */
+@media(max-width:900px){
+  .hero{
+    grid-template-columns:1fr;
+    text-align:center;
+    padding:80px 24px 36px;
+    gap:36px;
+  }
+  .hero p{margin:0 auto 32px}
+  .hero-btns{justify-content:center}
+  .hero-right{order:-0}
+  .mockup-wrap{max-width:360px;margin:0 auto}
+  .schedule-card{left:-10px;bottom:-16px;width:170px}
+  .chat-card{right:-10px;top:0}
+  .nav-center{display:none}
+  .nav-search{display:none}
+  .nav-ham{display:flex}
+  .nav-btn{display:none}
+  .purchase-steps-row{grid-template-columns:1fr 1fr}
+  .purchase-step-card::after{display:none}
+}
+@media(max-width:640px){
+  .hero{padding:80px 20px 36px;gap:36px}
+  .section-wrap{padding:64px 20px}
+  .purchase-steps-row{grid-template-columns:1fr;gap:12px}
+  .purchase-step-card::after{display:none}
+  .toss-cta-box{flex-direction:column;padding:24px}
+  .toss-cta-right{align-items:stretch;width:100%}
+  .toss-pay-btn{justify-content:center}
+  .security-badges{justify-content:flex-start}
+  .template-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .float-mockup{display:none}
+  footer{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .category-row{gap:6px}
+  .cat-tab{padding:8px 14px;font-size:12px}
+}
+@media(max-width:420px){
+  .features-grid{grid-template-columns:1fr}
+  .hero h1{font-size:32px}
+}
 </style>
 </head>
 <body>
-<div class="box">
-  <h1>Vkit</h1>
-  <p>준비 중입니다 🎨</p>
+
+<div class="bg-mesh"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <!-- Vkit 스타일 SVG 로고 -->
+    <svg class="logo-icon" width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 배경 라운드 -->
+      <rect width="34" height="34" rx="10" fill="url(#navBg)"/>
+      <!-- 뒤 패널 (블루) -->
+      <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#panelB)" opacity="0.85"/>
+      <!-- 앞 패널 (핑크) -->
+      <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#panelP)" opacity="0.9"/>
+      <!-- 동그라미 -->
+      <circle cx="10" cy="22" r="3.5" fill="url(#panelC)" opacity="0.8"/>
+      <defs>
+        <linearGradient id="navBg" x1="0" y1="0" x2="34" y2="34">
+          <stop stop-color="#EDE9FF"/>
+          <stop offset="1" stop-color="#F5F0FF"/>
+        </linearGradient>
+        <linearGradient id="panelB" x1="10" y1="14" x2="24" y2="28">
+          <stop stop-color="#7B72FF"/>
+          <stop offset="1" stop-color="#A5C8FF"/>
+        </linearGradient>
+        <linearGradient id="panelP" x1="14" y1="8" x2="27" y2="21">
+          <stop stop-color="#FF8ECF"/>
+          <stop offset="1" stop-color="#C7BFFF"/>
+        </linearGradient>
+        <linearGradient id="panelC" x1="6.5" y1="18.5" x2="13.5" y2="25.5">
+          <stop stop-color="#7EE6FF"/>
+          <stop offset="1" stop-color="#7B72FF"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    Vkit
+  </a>
+
+  <div class="nav-center">
+    <a href="#templates">템플릿</a>
+    <a href="#templates">에디터</a>
+    <a href="#features">가이드</a>
+    <a href="#purchase">구매안내</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-search">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="#7B78A8" stroke-width="1.5"/>
+        <path d="M9.5 9.5L12 12" stroke="#7B78A8" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      템플릿 검색...
+    </div>
+    <a href="#purchase" class="nav-btn">마이 스튜디오</a>
+    <button class="nav-ham" id="hamBtn" aria-label="메뉴">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- 모바일 드로어 -->
+<div class="mobile-drawer" id="drawer">
+  <a href="#templates">템플릿</a>
+  <a href="#templates">에디터</a>
+  <a href="#features">가이드</a>
+  <a href="#purchase">구매안내</a>
+  <a href="#purchase" class="m-btn">마이 스튜디오 →</a>
 </div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-badge fade-in">VTUBER DESIGN STUDIO</div>
+    <h1 class="fade-in">전문적인 방송 디자인<br><span class="gradient-text">쉽고 완벽하게</span></h1>
+    <p class="fade-in">Vkit은 스트리머와 크리에이터를 위한<br>전문 템플릿과 에디터를 제공합니다.</p>
+    <div class="hero-btns fade-in">
+      <a href="#templates" class="btn-primary">
+        템플릿 둘러보기
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#templates" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 3.5L12 5.5 9.5 8l.5 3.5L7 10 3.5 11.5l.5-3.5L1.5 5.5 5 4.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        에디터 시작하기
+      </a>
+    </div>
+  </div>
+
+  <!-- 히어로 목업 -->
+  <div class="hero-right fade-in">
+    <div class="mockup-wrap">
+      <div class="mockup-main">
+        <div class="mockup-topbar">
+          <div class="mockup-dots">
+            <span class="dot-r"></span>
+            <span class="dot-y"></span>
+            <span class="dot-g"></span>
+          </div>
+          <div class="mockup-title-bar">
+            <span style="flex:1">vkit.studio/editor</span>
+            <span class="live-badge">● LIVE</span>
+          </div>
+        </div>
+        <!-- 방송 화면 목업 -->
+        <div class="mockup-content">
+          <div class="star"></div><div class="star"></div>
+          <div class="star"></div><div class="star"></div><div class="star"></div>
+          <div class="moon"></div>
+          <div class="mockup-live-label">
+            <div class="live-dot"></div>
+            LIVE
+          </div>
+          <div class="cloud cloud1"></div>
+          <div class="cloud cloud2"></div>
+          <div class="cloud cloud3"></div>
+        </div>
+      </div>
+
+      <!-- 스케줄 카드 -->
+      <div class="float-mockup schedule-card">
+        <div class="sched-title">📅 Schedule</div>
+        <div class="sched-row">
+          <span class="sched-day">MON</span>
+          <span class="sched-icon">🎮</span>
+          <span class="sched-text">게임 방송</span>
+        </div>
+        <div class="sched-row">
+          <span class="sched-day">WED</span>
+          <span class="sched-icon">🎵</span>
+          <span class="sched-text">노래 리뷰</span>
+        </div>
+        <div class="sched-row">
+          <span class="sched-day">FRI</span>
+          <span class="sched-icon">💬</span>
+          <span class="sched-text">시청자 참여</span>
+        </div>
+      </div>
+
+      <!-- 채팅 카드 -->
+      <div class="float-mockup chat-card">
+        <div class="chat-title">
+          ✦ CHAT
+          <span class="chat-online"></span>
+        </div>
+        <div class="chat-msg"><strong>하늘이</strong> 오늘 방송 너무 기대돼요!</div>
+        <div class="chat-msg"><strong>달빛</strong> 와 대박!!</div>
+        <div class="chat-msg"><strong>별사탕</strong> 이 템플릿 어디서 구한거예요?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATES -->
+<div class="section-wrap" id="templates">
+  <div class="fade-in">
+    <div class="section-label">Templates</div>
+    <div class="section-title">템플릿 컬렉션</div>
+    <p class="section-sub">구매 후 온라인 에디터에서 바로 수정하고 저장할 수 있어요</p>
+  </div>
+
+  <!-- 카테고리 아이콘+텍스트 -->
+  <div class="category-row fade-in">
+    <div class="cat-tab active"><span class="cat-icon">⊞</span> 전체</div>
+    <div class="cat-tab"><span class="cat-icon">🖼️</span> 오버레이</div>
+    <div class="cat-tab"><span class="cat-icon">💬</span> 채팅창</div>
+    <div class="cat-tab"><span class="cat-icon">📅</span> 스케줄</div>
+    <div class="cat-tab"><span class="cat-icon">🏷️</span> 스티커</div>
+    <div class="cat-tab"><span class="cat-icon">🖥️</span> 배경화면</div>
+    <div class="cat-tab"><span class="cat-icon">✨</span> 인트로/엔딩</div>
+    <div class="cat-tab"><span class="cat-icon">···</span> 기타</div>
+  </div>
+
+  <div class="template-grid" id="template-grid">
+    <div id="tmpl-loading" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">
+      템플릿 불러오는 중...
+    </div>
+  </div>
+</div> FEATURES -->
+<div class="features-section">
+  <div class="section-wrap" id="features">
+    <div class="fade-in">
+      <div class="section-label">Features</div>
+      <div class="section-title">왜 이 템플릿인가요?</div>
+      <p class="section-sub">버추얼 스트리머를 위해 특별히 설계된 기능들</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-title">온라인 에디터 제공</div>
+        <div class="feature-desc">구매 후 별도 프로그램 없이 브라우저에서 바로 수정하고 저장할 수 있어요</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">모바일 지원</div>
+        <div class="feature-desc">PC뿐만 아니라 스마트폰에서도 매주 일정표를 손쉽게 업데이트 가능해요</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🖼️</div>
+        <div class="feature-title">일러스트 교체</div>
+        <div class="feature-desc">나만의 캐릭터 일러스트를 자유롭게 교체해서 완전한 나만의 템플릿으로</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">자동 날짜 입력</div>
+        <div class="feature-desc">매주 접속하면 이번주 날짜가 자동으로 채워져요. 번거로운 입력 불필요</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🔴</div>
+        <div class="feature-title">방송/게릴라 토글</div>
+        <div class="feature-desc">방송 여부와 게릴라 방송을 버튼 하나로 설정하면 자동으로 이미지가 변경돼요</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">💾</div>
+        <div class="feature-title">자동저장</div>
+        <div class="feature-desc">작업 내용이 자동으로 저장돼서 실수로 창을 닫아도 걱정 없어요</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE -->
+<div class="section-wrap" id="purchase">
+  <div class="fade-in">
+    <div class="section-label">Purchase</div>
+    <div class="section-title">구매 안내</div>
+    <p class="section-sub">결제 즉시 마이페이지에서 바로 사용 가능해요</p>
+  </div>
+
+  <!-- 3단계 카드 -->
+  <div class="purchase-steps-row fade-in">
+    <div class="purchase-step-card">
+      <div class="step-num">1</div>
+      <div class="step-icon">🛍️</div>
+      <div class="step-title">템플릿 선택</div>
+      <div class="step-desc">갤러리에서 원하는 템플릿을 골라 구매하기 버튼을 눌러요</div>
+    </div>
+    <div class="purchase-step-card">
+      <div class="step-num">2</div>
+      <div class="step-icon">💳</div>
+      <div class="step-title">토스페이먼츠 결제</div>
+      <div class="step-desc">카드·계좌이체·토스페이 등 다양한 방법으로 간편하게 결제해요</div>
+    </div>
+    <div class="purchase-step-card">
+      <div class="step-num">3</div>
+      <div class="step-icon">✨</div>
+      <div class="step-title">마이페이지에서 바로 사용</div>
+      <div class="step-desc">결제 완료 즉시 마이페이지에 템플릿이 추가돼요. 바로 에디터에서 편집 시작!</div>
+    </div>
+  </div>
+
+  <!-- 토스 CTA 박스 -->
+  <div class="toss-cta-box fade-in">
+    <div class="toss-cta-left">
+      <div class="toss-cta-title">지금 바로 시작해보세요</div>
+      <div class="toss-cta-desc">결제 후 즉시 마이페이지에서 템플릿을 확인할 수 있어요.<br>에디터에서 바로 커스터마이징하고 저장까지 한번에!</div>
+      <div class="toss-cta-note">
+        <span>🔒</span> 결제는 토스페이먼츠가 안전하게 처리합니다
+      </div>
+    </div>
+    <div class="toss-cta-right">
+      <button class="toss-pay-btn" onclick="alert('토스페이먼츠 연동 준비 중이에요!')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 10h18M7 15h1m4 0h1M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        템플릿 구매하기
+      </button>
+      <div class="security-badges">
+        <span class="sec-badge">✅ SSL 보안결제</span>
+        <span class="sec-badge">⚡ 즉시 발급</span>
+        <span class="sec-badge">🔄 환불 정책</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-logo-row">
+      <svg width="26" height="26" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="10" fill="url(#fBg)"/>
+        <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#fB)" opacity="0.85"/>
+        <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#fP)" opacity="0.9"/>
+        <circle cx="10" cy="22" r="3.5" fill="url(#fC)" opacity="0.8"/>
+        <defs>
+          <linearGradient id="fBg" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#EDE9FF"/><stop offset="1" stop-color="#F5F0FF"/></linearGradient>
+          <linearGradient id="fB" x1="10" y1="14" x2="24" y2="28"><stop stop-color="#7B72FF"/><stop offset="1" stop-color="#A5C8FF"/></linearGradient>
+          <linearGradient id="fP" x1="14" y1="8" x2="27" y2="21"><stop stop-color="#FF8ECF"/><stop offset="1" stop-color="#C7BFFF"/></linearGradient>
+          <linearGradient id="fC" x1="6.5" y1="18.5" x2="13.5" y2="25.5"><stop stop-color="#7EE6FF"/><stop offset="1" stop-color="#7B72FF"/></linearGradient>
+        </defs>
+      </svg>
+      Vkit
+    </div>
+    <div class="footer-desc">버추얼 스트리머를 위한 디자인 템플릿 · Design your V world</div>
+  </div>
+  <div class="footer-links">
+    <a href="#">트위터</a>
+    <a href="#">이용약관</a>
+    <a href="#">환불정책</a>
+    <a href="#">문의하기</a>
+  </div>
+</footer>
+
+<script>
+// ── Supabase 템플릿 불러오기 ──────────────────────────
+const SB_URL  = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
+const CART_SVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1h1.5l1.5 6h5l1-4H4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5.5" cy="10" r="0.8" fill="currentColor"/><circle cx="9" cy="10" r="0.8" fill="currentColor"/></svg>`;
+
+const CAT_MAP = {
+  schedule:     { label:'스케줄',   icon:'📅' },
+  announcement: { label:'공지',     icon:'📢' },
+  promotion:    { label:'홍보',     icon:'🎯' },
+  overlay:      { label:'오버레이', icon:'🖼️' },
+  chat:         { label:'채팅창',   icon:'💬' },
+  sticker:      { label:'스티커',   icon:'🏷️' },
+  etc:          { label:'기타',     icon:'✨' },
+};
+
+function priceStr(p){ return p === 0 ? '무료' : p.toLocaleString()+'<span>원</span>'; }
+
+function makeCard(t){
+  const cat = CAT_MAP[t.category] || { label: t.category || '기타', icon:'✨' };
+  const thumb = t.thumbnail
+    ? `<img src="${t.thumbnail}" alt="${t.title}" style="width:100%;height:100%;object-fit:cover">`
+    : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
+  return `
+    <div class="template-card fade-in" data-category="${t.category||'etc'}">
+      <div class="template-thumb">
+        ${thumb}
+        <div class="thumb-overlay"><button class="preview-btn">미리보기</button></div>
+      </div>
+      <div class="template-info">
+        <div class="template-cat">${cat.label}</div>
+        <div class="template-name">${t.title}</div>
+        <div class="template-desc">${t.description||''}</div>
+        <div class="template-footer">
+          <div class="template-price">${priceStr(t.price||0)}</div>
+          <button class="cart-btn" data-id="${t.id}" onclick="handleBuy('${t.id}','${t.title}',${t.price||0})">
+            ${CART_SVG} 구매하기
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function loadTemplates(category='all'){
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">불러오는 중...</div>';
+  try {
+    let url = `${SB_URL}/rest/v1/templates?select=id,title,description,category,price,thumbnail,tags,created_at&order=created_at.desc`;
+    if(category !== 'all') url += `&category=eq.${category}`;
+    const res = await fetch(url, {
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+    });
+    const data = await res.json();
+    if(!data.length){
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">등록된 템플릿이 없어요 🥲</div>';
+      return;
+    }
+    grid.innerHTML = data.map(makeCard).join('');
+    // 페이드인 재등록
+    grid.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+  } catch(e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#e84040;font-size:14px">불러오기 실패 😢<br><small>'+e.message+'</small></div>';
+  }
+}
+
+function handleBuy(id, title, price){
+  alert(`"${title}" 구매하기\n토스페이먼츠 연동 준비 중이에요!`);
+}
+
+// 카테고리 탭 → 필터링 연결
+const CAT_TAB_MAP = ['all','overlay','chat','schedule','sticker','background','intro','etc'];
+
+// ── 페이드인 ──────────────────────────────────────────
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'), i*70);
+  });
+},{threshold:0.08});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+// 카테고리 탭
+document.querySelectorAll('.cat-tab').forEach((tab, idx)=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    loadTemplates(CAT_TAB_MAP[idx] || 'all');
+  });
+});
+
+// 햄버거
+const hamBtn = document.getElementById('hamBtn');
+const drawer = document.getElementById('drawer');
+hamBtn.addEventListener('click',()=>{
+  drawer.classList.toggle('open');
+});
+// 드로어 링크 클릭시 닫기
+drawer.querySelectorAll('a').forEach(a=>{
+  a.addEventListener('click',()=>drawer.classList.remove('open'));
+});
+
+// 페이지 로드 시 템플릿 불러오기
+loadTemplates();
+</script>
 </body>
 </html>
