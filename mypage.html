@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vkit — 마이페이지</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#F0EFFF;min-height:100vh}
+nav{background:#fff;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(123,114,255,0.1)}
+.logo{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:#7B72FF}
+.nav-right{display:flex;align-items:center;gap:12px}
+.user-email{font-size:13px;color:#7B78A8}
+.logout-btn{padding:7px 16px;border:1.5px solid #E8E6FF;border-radius:8px;background:#fff;color:#7B78A8;font-size:13px;cursor:pointer}
+.logout-btn:hover{border-color:#7B72FF;color:#7B72FF}
+.wrap{max-width:900px;margin:40px auto;padding:0 20px}
+h1{font-size:22px;font-weight:800;color:#1A1830;margin-bottom:6px}
+.sub{font-size:14px;color:#7B78A8;margin-bottom:32px}
+.section-title{font-size:13px;font-weight:700;color:#7B78A8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:48px}
+.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(123,114,255,0.08);transition:transform .2s}
+.card:hover{transform:translateY(-2px)}
+.thumb{height:140px;background:linear-gradient(135deg,#EDE9FF,#F5F0FF);display:flex;align-items:center;justify-content:center;font-size:36px}
+.card-body{padding:16px}
+.card-name{font-size:15px;font-weight:700;color:#1A1830;margin-bottom:4px}
+.card-desc{font-size:12px;color:#7B78A8;margin-bottom:14px}
+.edit-btn{width:100%;padding:10px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.edit-btn:hover{opacity:.9}
+.empty{text-align:center;padding:60px 20px;color:#7B78A8;font-size:14px}
+.loading{text-align:center;padding:60px;color:#7B78A8}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Vkit</div>
+  <div class="nav-right">
+    <span class="user-email" id="user-email"></span>
+    <button class="logout-btn" onclick="logout()">로그아웃</button>
+  </div>
+</nav>
+<div class="wrap">
+  <h1>마이페이지</h1>
+  <p class="sub">구매한 템플릿을 에디터에서 바로 수정해보세요</p>
+  <div class="section-title">내 템플릿</div>
+  <div class="grid" id="template-grid">
+    <div class="loading">불러오는 중...</div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function init() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { location.href = 'login.html'; return; }
+
+  document.getElementById('user-email').textContent = user.email;
+
+  const { data: purchases } = await sb.from('purchases')
+    .select('*, templates(*)')
+    .eq('user_id', user.id);
+
+  const grid = document.getElementById('template-grid');
+
+  if (!purchases || purchases.length === 0) {
+    grid.innerHTML = '<div class="empty">아직 구매한 템플릿이 없어요 🎨<br><br><a href="index.html" style="color:#7B72FF;font-weight:700">템플릿 보러가기 →</a></div>';
+    return;
+  }
+
+  grid.innerHTML = purchases.map(p => `
+    <div class="card">
+      <div class="thumb">🎨</div>
+      <div class="card-body">
+        <div class="card-name">${p.templates.name}</div>
+        <div class="card-desc">${p.templates.description || ''}</div>
+        <button class="edit-btn" onclick="openEditor('${p.template_id}', '${p.id}')">에디터 열기</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openEditor(templateId, purchaseId) {
+  location.href = `editor.html?tid=${templateId}&pid=${purchaseId}`;
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.href = 'login.html';
+}
+
+init();
+</script>
+</body>
+</html>
