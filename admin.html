@@ -770,6 +770,57 @@ function openUploadModal(){
 }
 function closeUploadModal(){toggleModal('upload-modal',false);}
 
+// ── Storage에 이미지 업로드 후 URL 반환 ──────────────
+async function uploadImageToStorage(dataUrl, path){
+  // base64 → Blob 변환
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+  const fullPath = `${path}.${ext}`;
+
+  const uploadRes = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/template-images/${fullPath}`,
+    {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': blob.type,
+        'x-upsert': 'true'
+      },
+      body: blob
+    }
+  );
+  if(!uploadRes.ok){
+    const e = await uploadRes.json().catch(()=>({}));
+    throw new Error('Storage 업로드 실패: ' + (e.message||uploadRes.statusText));
+  }
+  // public URL 반환
+  return `${SUPABASE_URL}/storage/v1/object/public/template-images/${fullPath}`;
+}
+
+// ── 레이어 이미지 + 배경 이미지 Storage 업로드 ──────
+async function uploadAllImages(templateId){
+  const layersCopy = JSON.parse(JSON.stringify(layers));
+
+  // 배경 이미지 업로드
+  let bgUrl = null;
+  if(bgImage){
+    showUpStatus('info', '배경 이미지 업로드 중...');
+    bgUrl = await uploadImageToStorage(bgImage, `${templateId}/bg`);
+  }
+
+  // 레이어 이미지 업로드
+  for(let i=0; i<layersCopy.length; i++){
+    const l = layersCopy[i];
+    if(l.type === 'image' && l.src && l.src.startsWith('data:')){
+      showUpStatus('info', `이미지 레이어 업로드 중... (${i+1}/${layersCopy.length})`);
+      l.src = await uploadImageToStorage(l.src, `${templateId}/layer_${l.id}`);
+    }
+  }
+  return { layersCopy, bgUrl };
+}
+
 async function doUploadToSupabase(){
   const title = document.getElementById('up-title').value.trim();
   if(!title){showUpStatus('danger','제목을 입력해주세요.');return;}
@@ -780,37 +831,40 @@ async function doUploadToSupabase(){
   showUpStatus('info','썸네일 생성 중...');
 
   try {
-    // 1. 썸네일 생성 (작게 리사이즈해서 용량 줄이기)
+    // 1. 썸네일 생성
     const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
     const thumbDataUrl = await resizeThumb(fullDataUrl, 400);
 
-    // 2. 의뢰자 HTML 생성
-    const clientHTML = buildClientHTML();
-
-    // 3. 태그 파싱
+    // 2. 태그 파싱
     const tagsRaw = document.getElementById('up-tags').value.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
 
-    showUpStatus('info','Supabase에 업로드 중...');
+    // 3. 임시 ID 생성 (Storage 경로용)
+    const tempId = Date.now().toString(36);
 
-    // 4. templates 테이블에 저장 (이미지 src 제거해서 용량 줄이기)
-    const layersNoSrc = layers.map(l => {
-      if(l.type === 'image') { const c={...l}; delete c.src; return c; }
-      return l;
-    });
+    // 4. 이미지들 Storage에 업로드
+    const { layersCopy, bgUrl } = await uploadAllImages(tempId);
+
+    showUpStatus('info', 'DB에 저장 중...');
+
+    // 5. 썸네일도 Storage에 업로드
+    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${tempId}/thumb`);
+
+    // 6. templates 테이블에 저장
     const payload = {
-      title: title,
+      title,
       description: document.getElementById('up-desc').value.trim() || null,
       category: document.getElementById('up-category').value,
       price: parseInt(document.getElementById('up-price').value) || 0,
-      tags: tags,
-      canvas_w: canvasW,
-      canvas_h: canvasH,
+      tags,
+      canvas_w: canvasW, canvas_h: canvasH,
       layer_count: layers.length,
       client_layer_count: layers.filter(l=>l.clientEditable).length,
-      template_data: JSON.stringify({layers: layersNoSrc, groups, canvasW, canvasH,
-        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))}),
-      thumbnail: thumbDataUrl,
+      template_data: JSON.stringify({
+        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl,
+        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
+      }),
+      thumbnail: thumbUrl,
       created_at: new Date().toISOString(),
     };
 
@@ -832,7 +886,7 @@ async function doUploadToSupabase(){
 
     const result = await res.json();
     const newId = result[0]?.id;
-    showUpStatus('success', `✅ 업로드 완료! ID: ${newId || '저장됨'}`);
+    showUpStatus('success', `✅ 업로드 완료!`);
     btn.innerHTML = '<i class="ti ti-check"></i> 완료';
     showMsg('Supabase 업로드 완료!');
     setTimeout(()=>closeUploadModal(), 2000);
@@ -893,7 +947,16 @@ async function loadTemplateFromDB(id, title){
     groups = d.groups || {};
     canvasW = d.canvasW || 1080;
     canvasH = d.canvasH || 1080;
-    bgImage = d.bgImage || null;
+    // bgImage: URL이면 그대로 사용, base64면 그대로
+    if(d.bgImage){
+      if(d.bgImage.startsWith('http')){
+        // URL → Image 객체로 캐싱
+        const img = new Image(); img.crossOrigin='anonymous'; img.src = d.bgImage;
+        bgImage = d.bgImage;
+      } else {
+        bgImage = d.bgImage;
+      }
+    } else { bgImage = null; }
     localFontData = d.localFontData || {};
     document.getElementById('cw').value = canvasW;
     document.getElementById('ch').value = canvasH;
@@ -940,14 +1003,21 @@ async function doOverwriteToSupabase(){
   const btn = document.getElementById('up-overwrite-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> 저장 중...';
-  showUpStatus('info', '덮어쓰기 저장 중...');
+  showUpStatus('info', '이미지 업로드 중...');
 
   try {
+    // 이미지들 Storage에 업로드 (같은 templateId 경로로 덮어쓰기)
+    const { layersCopy, bgUrl } = await uploadAllImages(currentTemplateId);
+
+    showUpStatus('info', '썸네일 생성 중...');
     const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
     const thumbDataUrl = await resizeThumb(fullDataUrl, 400);
+    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${currentTemplateId}/thumb`);
+
     const tagsRaw = document.getElementById('up-tags').value.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
-    const layersNoSrc = layers.map(l=>{ if(l.type==='image'){const c={...l};delete c.src;return c;}return l; });
+
+    showUpStatus('info', 'DB 업데이트 중...');
 
     const payload = {
       title,
@@ -958,9 +1028,11 @@ async function doOverwriteToSupabase(){
       canvas_w: canvasW, canvas_h: canvasH,
       layer_count: layers.length,
       client_layer_count: layers.filter(l=>l.clientEditable).length,
-      template_data: JSON.stringify({layers: layersNoSrc, groups, canvasW, canvasH,
-        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))}),
-      thumbnail: thumbDataUrl,
+      template_data: JSON.stringify({
+        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl,
+        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
+      }),
+      thumbnail: thumbUrl,
     };
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${currentTemplateId}`, {
