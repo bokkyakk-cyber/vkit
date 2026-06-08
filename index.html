@@ -1257,8 +1257,63 @@ drawer.querySelectorAll('a').forEach(a=>{
   a.addEventListener('click',()=>drawer.classList.remove('open'));
 });
 
-// 페이지 로드 시 템플릿 불러오기
+// ── 네비 로그인 상태 반영 ──────────────────────────────
+async function initNav(){
+  const { createClient } = supabase;
+  const sb = createClient(SB_URL, SB_KEY);
+  const { data:{ user } } = await sb.auth.getUser();
+  const navRight = document.querySelector('.nav-right');
+  const drawerEl = document.getElementById('drawer');
+
+  if(user){
+    // 로그인 상태 → 마이페이지 + 로그아웃
+    document.querySelector('.nav-right .nav-btn').outerHTML =
+      `<a href="mypage.html" class="nav-btn">마이페이지</a>
+       <button class="nav-btn" id="logoutBtn" style="background:rgba(123,114,255,0.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,114,255,0.25)">로그아웃</button>`;
+    document.getElementById('logoutBtn').addEventListener('click', async()=>{
+      await sb.auth.signOut();
+      location.reload();
+    });
+    // 모바일 드로어
+    drawerEl.querySelector('.m-btn').textContent = '마이페이지 →';
+    drawerEl.querySelector('.m-btn').href = 'mypage.html';
+  } else {
+    // 비로그인 상태 → 로그인 버튼
+    document.querySelector('.nav-right .nav-btn').outerHTML =
+      `<a href="login.html" class="nav-btn">로그인</a>`;
+    drawerEl.querySelector('.m-btn').textContent = '로그인 →';
+    drawerEl.querySelector('.m-btn').href = 'login.html';
+  }
+}
+
+// ── 네비 로그인 상태 반영 ──────────────────────────────
+async function initNav(){
+  const { createClient } = supabase;
+  const sb = createClient(SB_URL, SB_KEY);
+  const { data:{ user } } = await sb.auth.getUser();
+  const drawerEl = document.getElementById('drawer');
+
+  if(user){
+    document.querySelector('.nav-right .nav-btn').outerHTML =
+      `<a href="mypage.html" class="nav-btn">마이페이지</a>
+       <button class="nav-btn" id="logoutBtn" style="background:rgba(123,114,255,0.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,114,255,0.25)">로그아웃</button>`;
+    document.getElementById('logoutBtn').addEventListener('click', async()=>{
+      await sb.auth.signOut();
+      location.reload();
+    });
+    drawerEl.querySelector('.m-btn').textContent = '마이페이지 →';
+    drawerEl.querySelector('.m-btn').href = 'mypage.html';
+  } else {
+    document.querySelector('.nav-right .nav-btn').outerHTML =
+      `<a href="login.html" class="nav-btn">로그인</a>`;
+    drawerEl.querySelector('.m-btn').textContent = '로그인 →';
+    drawerEl.querySelector('.m-btn').href = 'login.html';
+  }
+}
+
+// 페이지 로드 시 템플릿 불러오기 + 네비 초기화
 loadTemplates();
+initNav();
 </script>
 </body>
 </html>
