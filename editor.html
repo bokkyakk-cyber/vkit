@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Vkit 에디터</title>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#ece9f8;
@@ -260,15 +260,10 @@ function getWeekRange(){
   const labels=['이번 주','다음 주','다다음 주'];
   return{range:fmt(mon)+' ~ '+fmt(sun),label:labels[weekOffset]||'+'+weekOffset+'주'};
 }
-function updateWeekNav(){
-  const wr=getWeekRange();
-  document.getElementById('week-label-text').innerHTML=wr.label+'<span>'+wr.range+'</span>';
-  document.getElementById('btn-prev-week').disabled=weekOffset<=0;
-  document.getElementById('btn-next-week').disabled=weekOffset>=2;
-}
+function updateWeekNav(){}
 function changeWeek(dir){
   weekOffset=Math.max(0,Math.min(2,weekOffset+dir));
-  updateWeekNav();buildUI();
+  buildUI();
 }
 
 const canvas=document.getElementById('tmpl-canvas');
