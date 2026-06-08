@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결제 완료 — Vkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --violet:#7B72FF;--pink:#FF6EC7;--cyan:#7EE6FF;
+  --bg:#F0EFFF;--text:#1A1830;--text-sub:#7B78A8;
+  --glow-v:rgba(123,114,255,0.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Pretendard',-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+.bg-mesh{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 700px 500px at 80% -10%,rgba(123,114,255,0.18) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 400px at -10% 60%,rgba(255,110,199,0.14) 0%,transparent 70%),
+    linear-gradient(160deg,#EDEAFF 0%,#F6F4FF 45%,#FFF0FA 100%);
+}
+.wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:16px}
+.card{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(28px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:28px;padding:48px 40px 44px;
+  box-shadow:0 20px 60px rgba(123,114,255,0.12),0 4px 16px rgba(0,0,0,0.05);
+  text-align:center;
+}
+.logo{
+  font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;
+  color:var(--text);text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:36px;
+}
+/* 상태 아이콘 */
+.status-icon{
+  width:80px;height:80px;border-radius:24px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;font-size:36px;
+  animation:pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+.status-icon.success{
+  background:linear-gradient(135deg,rgba(80,200,120,0.15),rgba(123,114,255,0.1));
+  border:1px solid rgba(80,200,120,0.25);
+}
+.status-icon.loading{
+  background:linear-gradient(135deg,rgba(123,114,255,0.12),rgba(255,110,199,0.1));
+  border:1px solid rgba(123,114,255,0.2);
+  animation:none;
+}
+@keyframes pop{
+  from{transform:scale(0.6);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+.spinner{
+  width:36px;height:36px;
+  border:3px solid rgba(123,114,255,0.2);
+  border-top-color:var(--violet);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+.title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-0.4px}
+.sub{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:28px}
+
+/* 결제 정보 박스 */
+.info-box{
+  background:rgba(123,114,255,0.06);
+  border:1px solid rgba(123,114,255,0.12);
+  border-radius:14px;padding:16px 20px;
+  margin-bottom:24px;text-align:left;
+}
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;padding:4px 0;
+}
+.info-row:not(:last-child){border-bottom:1px solid rgba(123,114,255,0.08);padding-bottom:8px;margin-bottom:8px}
+.info-label{color:var(--text-sub);font-weight:600}
+.info-value{color:var(--text);font-weight:700}
+.info-value.price{color:var(--violet)}
+
+.btn{
+  width:100%;padding:14px;border-radius:14px;
+  background:linear-gradient(135deg,var(--violet),#A78BFA);
+  color:#fff;font-size:14px;font-weight:800;
+  border:none;cursor:pointer;
+  font-family:'Pretendard',sans-serif;
+  box-shadow:0 6px 20px var(--glow-v);
+  transition:all 0.22s;letter-spacing:0.2px;
+  text-decoration:none;display:block;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px var(--glow-v)}
+.btn-outline{
+  width:100%;padding:12px;border-radius:14px;
+  background:transparent;
+  border:1.5px solid rgba(123,114,255,0.25);
+  color:var(--violet);font-size:13px;font-weight:700;
+  cursor:pointer;font-family:'Pretendard',sans-serif;
+  transition:all 0.2s;margin-top:10px;
+}
+.btn-outline:hover{border-color:var(--violet);background:rgba(123,114,255,0.05)}
+.countdown{font-size:12px;color:var(--text-sub);margin-top:14px}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="wrap">
+  <div class="card" id="card">
+
+    <a href="index.html" class="logo">
+      <svg width="28" height="28" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="10" fill="url(#lBg)"/>
+        <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#lB)" opacity="0.85"/>
+        <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#lP)" opacity="0.9"/>
+        <circle cx="10" cy="22" r="3.5" fill="url(#lC)" opacity="0.8"/>
+        <defs>
+          <linearGradient id="lBg" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#EDE9FF"/><stop offset="1" stop-color="#F5F0FF"/></linearGradient>
+          <linearGradient id="lB" x1="10" y1="14" x2="24" y2="28"><stop stop-color="#7B72FF"/><stop offset="1" stop-color="#A5C8FF"/></linearGradient>
+          <linearGradient id="lP" x1="14" y1="8" x2="27" y2="21"><stop stop-color="#FF8ECF"/><stop offset="1" stop-color="#C7BFFF"/></linearGradient>
+          <linearGradient id="lC" x1="6.5" y1="18.5" x2="13.5" y2="25.5"><stop stop-color="#7EE6FF"/><stop offset="1" stop-color="#7B72FF"/></linearGradient>
+        </defs>
+      </svg>
+      Vkit
+    </a>
+
+    <!-- 로딩 상태 -->
+    <div id="loading-view">
+      <div class="status-icon loading"><div class="spinner"></div></div>
+      <div class="title">결제 확인 중...</div>
+      <div class="sub">잠시만 기다려주세요 🙏</div>
+    </div>
+
+    <!-- 성공 상태 -->
+    <div id="success-view" style="display:none">
+      <div class="status-icon success">🎉</div>
+      <div class="title">결제가 완료됐어요!</div>
+      <div class="sub">마이페이지에서 구매한 템플릿을<br>바로 확인하고 에디터에서 꾸며보세요!</div>
+      <div class="info-box" id="info-box"></div>
+      <a href="mypage.html" class="btn">마이페이지에서 확인하기</a>
+      <button class="btn-outline" onclick="location.href='index.html'">더 둘러보기</button>
+      <div class="countdown" id="countdown"></div>
+    </div>
+
+    <!-- 실패 상태 -->
+    <div id="fail-view" style="display:none">
+      <div class="status-icon" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2)">😢</div>
+      <div class="title">결제 처리 중 오류가 생겼어요</div>
+      <div class="sub" id="fail-msg">잠시 후 다시 시도해주세요.</div>
+      <button class="btn" onclick="location.href='index.html'">템플릿 보러가기</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
+const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
+
+function showFail(msg) {
+  document.getElementById('loading-view').style.display = 'none';
+  document.getElementById('fail-view').style.display = 'block';
+  document.getElementById('fail-msg').textContent = msg;
+}
+
+function showSuccess(templateTitle, amount) {
+  document.getElementById('loading-view').style.display = 'none';
+  document.getElementById('success-view').style.display = 'block';
+  document.getElementById('info-box').innerHTML = `
+    <div class="info-row">
+      <span class="info-label">템플릿</span>
+      <span class="info-value">${templateTitle}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">결제금액</span>
+      <span class="info-value price">${Number(amount).toLocaleString()}원</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">상태</span>
+      <span class="info-value">✅ 결제 완료</span>
+    </div>
+  `;
+
+  // 5초 후 자동 이동
+  let sec = 5;
+  const cd = document.getElementById('countdown');
+  cd.textContent = `${sec}초 후 마이페이지로 자동 이동해요`;
+  const t = setInterval(() => {
+    sec--;
+    if (sec <= 0) { clearInterval(t); location.href = 'mypage.html'; }
+    else cd.textContent = `${sec}초 후 마이페이지로 자동 이동해요`;
+  }, 1000);
+}
+
+async function init() {
+  // URL 파라미터 파싱
+  const params = new URLSearchParams(location.search);
+  const paymentKey = params.get('paymentKey');
+  const orderId    = params.get('orderId');
+  const amount     = params.get('amount');
+  const templateId = params.get('templateId');
+
+  if (!paymentKey || !orderId || !amount) {
+    showFail('잘못된 접근이에요.');
+    return;
+  }
+
+  // 로그인 확인
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    location.href = 'login.html';
+    return;
+  }
+
+  // 중복 저장 방지: 이미 처리된 orderId면 성공으로 처리
+  const { data: existing } = await sb.from('purchases')
+    .select('id, templates(title)')
+    .eq('order_id', orderId)
+    .single();
+
+  if (existing) {
+    showSuccess(existing.templates?.title || '템플릿', amount);
+    return;
+  }
+
+  // 템플릿 정보 가져오기
+  const { data: template } = await sb.from('templates')
+    .select('title')
+    .eq('id', templateId)
+    .single();
+
+  // purchases 테이블에 저장
+  const { error } = await sb.from('purchases').insert({
+    user_id: user.id,
+    template_id: templateId,
+    amount: Number(amount),
+    payment_key: paymentKey,
+    order_id: orderId,
+    status: 'done'
+  });
+
+  if (error) {
+    console.error(error);
+    showFail('구매 정보 저장 중 오류가 발생했어요. 고객센터에 문의해주세요.');
+    return;
+  }
+
+  showSuccess(template?.title || '템플릿', amount);
+}
+
+init();
+</script>
+</body>
+</html>
