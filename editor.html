@@ -115,19 +115,17 @@ textarea.fctrl{min-height:64px}
 <body>
 <div id="app">
 <div id="topbar">
-  <a href="/index.html" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;flex-shrink:0">
-    <span class="cbadge">Vkit 에디터</span>
+  <a href="/index.html" style="display:inline-flex;align-items:center;gap:7px;text-decoration:none;flex-shrink:0">
+    <span style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#7c5af0,#FF6EC7);display:inline-block;flex-shrink:0"></span>
+    <span style="font-family:'Geist',sans-serif;font-size:17px;font-weight:900;color:var(--text-1)">Vkit</span>
   </a>
   <h1>템플릿 에디터</h1>
-  <div id="week-nav">
-    <button class="wnav-btn" id="btn-prev-week" onclick="changeWeek(-1)" title="이전 주">‹</button>
-    <div class="week-label" id="week-label-text"></div>
-    <button class="wnav-btn" id="btn-next-week" onclick="changeWeek(1)" title="다음 주">›</button>
-  </div>
   <div class="tb-right">
     <button class="tb tb-ghost" onclick="undoC()">↩ 취소</button>
     <button class="tb tb-danger" onclick="resetC()">↺ 초기화</button>
     <button class="tb tb-primary" onclick="expPNG()">⬇ <span>PNG 저장</span></button>
+    <a href="/mypage.html" class="tb tb-ghost" style="text-decoration:none">마이페이지</a>
+    <button class="tb tb-ghost" id="editor-logout-btn">로그아웃</button>
   </div>
 </div>
 <div id="main">
@@ -391,7 +389,21 @@ function buildUI(){
   render();
   const usedGids=[...new Set(layers.filter(l=>l.group).map(l=>l.group))].filter(gid=>groups[gid]);
   let html='';
+
+  // ── 주 선택 (사이드바 상단) ──
+  const wr=getWeekRange();
+  html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 2px">
+    <button class="wnav-btn" onclick="changeWeek(-1)" id="btn-prev-week" ${weekOffset<=0?'disabled':''} style="width:30px;height:30px;border-radius:8px">‹</button>
+    <div style="flex:1;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--text-2)">${wr.label}</div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:1px">${wr.range}</div>
+    </div>
+    <button class="wnav-btn" onclick="changeWeek(1)" id="btn-next-week" ${weekOffset>=2?'disabled':''} style="width:30px;height:30px;border-radius:8px">›</button>
+  </div>`;
+
+  // ── 이미지 업로드 ──
   html+=mkIllusCard();
+
   usedGids.forEach((gid,idx)=>{
     const g=groups[gid];if(!g)return;
     const hasDay=!!g.day;
@@ -424,9 +436,9 @@ function toggleDay(gid){
 function mkIllusCard(){
   const has=!!illusData;
   return '<div class="gcard" id="illus-card"><div class="gcard-body">'+
-    '<div class="illus-drop'+(has?' has':'')+'" id="illus-drop" onclick="document.getElementById(\'illus-file\').click()" ondrop="onIllusDrop(event)" ondragover="onIllusDragOver(event)" ondragleave="onIllusDragLeave(event)">'+
-      '<span class="di">'+(has?'✅':'🖼')+'</span>'+
-      '<span class="dt">'+(has?'일러 등록됨 (클릭으로 교체)':'클릭 또는 드래그로 이미지 업로드')+'</span>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+      '<span style="font-size:10.5px;font-weight:700;color:var(--text-2)">🖼 일러스트 이미지</span>'+
+      (has?'<span style="font-size:10px;color:var(--accent);font-weight:600">등록됨 ✓</span>':'')+
     '</div>'+
     (has?
       '<div class="ibtns">'+
@@ -438,7 +450,12 @@ function mkIllusCard(){
         '<div class="crow"><span class="clbl">회전</span><input class="crange" type="range" id="sl-rt" min="-180" max="180" value="'+Math.round(illusRot)+'" oninput="illusRotSlider(this.value)"><span class="cval" id="vl-rt">'+Math.round(illusRot)+'°</span></div>'+
       '</div>'+
       '<div class="ihint">드래그=이동 · 모서리=크기 · ↺=회전</div>'
-      :'<div class="ihint" style="text-align:center">투명 배경 PNG가 위에 얹혀 일러스트가 보입니다</div>')+
+    :
+      '<button onclick="document.getElementById(\'illus-file\').click()" ondrop="onIllusDrop(event)" ondragover="onIllusDragOver(event)" style="width:100%;padding:10px 14px;background:rgba(124,90,240,.07);border:1.5px dashed rgba(124,90,240,.28);border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background=\'rgba(124,90,240,.13)\'" onmouseout="this.style.background=\'rgba(124,90,240,.07)\'">'+
+        '+ 이미지 업로드 (투명 PNG)'+
+      '</button>'+
+      '<div class="ihint" style="text-align:center;margin-top:6px">투명 배경 PNG가 위에 얹혀 일러스트가 보입니다</div>'
+    )+
   '</div></div>';
 }
 function illusScaleSlider(v){illusScale=v/100;document.getElementById('vl-sc').textContent=v+'%';render();drawIllusOv();}
@@ -577,7 +594,14 @@ function closeEdit(){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEdit();if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undoC();}});
 window.addEventListener('resize',initCanvas);
-window.addEventListener('load',()=>initEditor());
+window.addEventListener('load',()=>{
+  // 로그아웃 버튼
+  document.getElementById('editor-logout-btn')?.addEventListener('click',async()=>{
+    for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}
+    location.href='/index.html';
+  });
+  initEditor();
+});
 </script>
 </body>
 </html>
