@@ -1055,7 +1055,7 @@ footer{
       </div>
     </div>
     <div class="toss-cta-right">
-      <button class="toss-pay-btn" onclick="alert('토스페이먼츠 연동 준비 중이에요!')">
+      <button class="toss-pay-btn" onclick="document.getElementById('templates').scrollIntoView({behavior:'smooth'})">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 10h18M7 15h1m4 0h1M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         템플릿 구매하기
       </button>
@@ -1096,6 +1096,8 @@ footer{
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.tosspayments.com/v1/payment"></script>
 <script>
 // ── Supabase 템플릿 불러오기 ──────────────────────────
 const SB_URL  = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
@@ -1161,8 +1163,67 @@ async function loadTemplates(category='all'){
   }
 }
 
-function handleBuy(id, title, price){
-  alert(`"${title}" 구매하기\n토스페이먼츠 연동 준비 중이에요!`);
+const TOSS_CLIENT_KEY = 'test_ck_pP2YxJ4K872zayKngZ4LrRGZwXLO';
+
+async function handleBuy(id, title, price) {
+  // 1. 로그인 체크
+  const { createClient } = supabase;
+  const sb = createClient(SB_URL, SB_KEY);
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    if (confirm('구매하려면 로그인이 필요해요!\n로그인 페이지로 이동할까요?')) {
+      location.href = 'login.html';
+    }
+    return;
+  }
+
+  // 2. 이미 구매했는지 체크
+  const { data: existing } = await sb.from('purchases')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('template_id', id)
+    .single();
+
+  if (existing) {
+    alert('이미 구매한 템플릿이에요! 마이페이지에서 확인해보세요 😊');
+    location.href = 'mypage.html';
+    return;
+  }
+
+  // 3. 무료 템플릿 처리
+  if (price === 0) {
+    const { error } = await sb.from('purchases').insert({
+      user_id: user.id,
+      template_id: id,
+      amount: 0,
+      payment_key: 'free',
+      order_id: `free_${id}_${Date.now()}`,
+      status: 'done'
+    });
+    if (!error) {
+      alert('🎉 무료 템플릿이 추가됐어요! 마이페이지에서 확인해보세요');
+      location.href = 'mypage.html';
+    }
+    return;
+  }
+
+  // 4. 토스페이먼츠 결제창 호출
+  const orderId = `vkit_${id.slice(0,8)}_${Date.now()}`;
+  const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+
+  tossPayments.requestPayment('카드', {
+    amount: price,
+    orderId: orderId,
+    orderName: title,
+    customerName: user.email,
+    customerEmail: user.email,
+    successUrl: `${location.origin}/payment-success.html?templateId=${id}`,
+    failUrl: `${location.origin}/payment-fail.html`,
+  }).catch(err => {
+    if (err.code !== 'USER_CANCEL') {
+      alert('결제 오류가 발생했어요: ' + err.message);
+    }
+  });
 }
 
 // 카테고리 탭 → 필터링 연결
