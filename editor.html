@@ -270,6 +270,7 @@ function gImg(src){
 
 function initCanvas(){
   const area=document.getElementById('canvas-area');
+  if(!area)return;
   const areaW=area.offsetWidth||window.innerWidth-310;
   const areaH=area.offsetHeight||window.innerHeight-52;
   const maxW=areaW-32,maxH=areaH-32;
