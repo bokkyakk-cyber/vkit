@@ -60,27 +60,42 @@ async function init() {
 
   document.getElementById('user-email').textContent = user.email;
 
-  const { data: purchases } = await sb.from('purchases')
-    .select('*, templates(*)')
+  // purchases 조회
+  const { data: purchases, error: pErr } = await sb.from('purchases')
+    .select('id, template_id, amount, status, paid_at')
     .eq('user_id', user.id);
 
   const grid = document.getElementById('template-grid');
 
-  if (!purchases || purchases.length === 0) {
+  if (pErr || !purchases || purchases.length === 0) {
     grid.innerHTML = '<div class="empty">아직 구매한 템플릿이 없어요 🎨<br><br><a href="index.html" style="color:#7B72FF;font-weight:700">템플릿 보러가기 →</a></div>';
     return;
   }
 
-  grid.innerHTML = purchases.map(p => `
+  // template_id 목록으로 템플릿 정보 별도 조회
+  const templateIds = purchases.map(p => p.template_id);
+  const { data: templates } = await sb.from('templates')
+    .select('id, title, description, thumbnail, category')
+    .in('id', templateIds);
+
+  const templateMap = {};
+  (templates || []).forEach(t => templateMap[t.id] = t);
+
+  grid.innerHTML = purchases.map(p => {
+    const t = templateMap[p.template_id] || {};
+    const thumb = t.thumbnail
+      ? `<img src="${t.thumbnail}" style="width:100%;height:140px;object-fit:cover">`
+      : `<div class="thumb">🎨</div>`;
+    return `
     <div class="card">
-      <div class="thumb">🎨</div>
+      ${thumb}
       <div class="card-body">
-        <div class="card-name">${p.templates.name}</div>
-        <div class="card-desc">${p.templates.description || ''}</div>
+        <div class="card-name">${t.title || '템플릿'}</div>
+        <div class="card-desc">${t.description || ''}</div>
         <button class="edit-btn" onclick="openEditor('${p.template_id}', '${p.id}')">에디터 열기</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 async function openEditor(templateId, purchaseId) {
