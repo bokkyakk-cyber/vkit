@@ -10,12 +10,19 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,sans-serif;background:#F0EFFF;min-height:100vh}
-nav{background:#fff;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(123,114,255,0.1)}
-.logo{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:#7B72FF}
-.nav-right{display:flex;align-items:center;gap:12px}
-.user-email{font-size:13px;color:#7B78A8}
-.logout-btn{padding:7px 16px;border:1.5px solid #E8E6FF;border-radius:8px;background:#fff;color:#7B78A8;font-size:13px;cursor:pointer}
-.logout-btn:hover{border-color:#7B72FF;color:#7B72FF}
+:root{--violet:#7B72FF;--pink:#FF6EC7;--cyan:#7EE6FF;--lavender:#C7BFFF;--bg:#F0EFFF;--text:#1A1830;--text-sub:#7B78A8;--shadow:rgba(123,114,255,0.16);--glow-v:rgba(123,114,255,0.22)}
+nav{position:sticky;top:0;z-index:200;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px);background:rgba(245,243,255,0.82);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.72);box-shadow:0 1px 0 rgba(180,170,255,0.12)}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--text);letter-spacing:-0.5px;flex-shrink:0}
+.logo-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:visible;flex-shrink:0}
+.nav-center{display:flex;align-items:center;gap:4px;position:absolute;left:50%;transform:translateX(-50%)}
+.nav-center a{font-size:14px;font-weight:600;color:var(--text-sub);text-decoration:none;padding:6px 14px;border-radius:8px;transition:all 0.18s;white-space:nowrap}
+.nav-center a:hover{background:rgba(123,114,255,0.08);color:var(--violet)}
+.nav-right-area{display:flex;align-items:center;gap:10px;margin-left:auto}
+.nav-btn{background:linear-gradient(135deg,var(--violet),#A78BFA);color:#fff;padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;border:none;cursor:pointer;box-shadow:0 4px 16px var(--glow-v);transition:all 0.2s;white-space:nowrap;font-family:inherit}
+.nav-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px var(--glow-v)}
+.nav-btn-ghost{background:rgba(123,114,255,0.08);color:var(--violet);padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1.5px solid rgba(123,114,255,0.2);cursor:pointer;transition:all 0.2s;white-space:nowrap;font-family:inherit}
+.nav-btn-ghost:hover{background:rgba(123,114,255,0.15)}
+@media(max-width:900px){.nav-center{display:none}}
 .wrap{max-width:900px;margin:40px auto;padding:0 20px}
 h1{font-size:22px;font-weight:800;color:#1A1830;margin-bottom:6px}
 .sub{font-size:14px;color:#7B78A8;margin-bottom:32px}
@@ -35,10 +42,31 @@ h1{font-size:22px;font-weight:800;color:#1A1830;margin-bottom:6px}
 </head>
 <body>
 <nav>
-  <div class="logo">Vkit</div>
-  <div class="nav-right">
-    <span class="user-email" id="user-email"></span>
-    <button class="logout-btn" onclick="logout()">로그아웃</button>
+  <a href="index.html" class="nav-logo">
+    <svg class="logo-icon" width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="34" height="34" rx="10" fill="url(#navBg2)"/>
+  <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#panelB2)" opacity="0.85"/>
+  <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#panelP2)" opacity="0.9"/>
+  <circle cx="10" cy="22" r="3.5" fill="url(#panelC2)" opacity="0.8"/>
+  <defs>
+    <linearGradient id="navBg2" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#EDE9FF"/><stop offset="1" stop-color="#F5F0FF"/></linearGradient>
+    <linearGradient id="panelB2" x1="10" y1="14" x2="24" y2="28"><stop stop-color="#7B72FF"/><stop offset="1" stop-color="#A5C8FF"/></linearGradient>
+    <linearGradient id="panelP2" x1="14" y1="8" x2="27" y2="21"><stop stop-color="#FF8ECF"/><stop offset="1" stop-color="#C7BFFF"/></linearGradient>
+    <linearGradient id="panelC2" x1="6.5" y1="18.5" x2="13.5" y2="25.5"><stop stop-color="#7EE6FF"/><stop offset="1" stop-color="#7B72FF"/></linearGradient>
+  </defs>
+</svg>
+    Vkit
+  </a>
+  <div class="nav-center">
+    <a href="index.html#templates">템플릿</a>
+    <a href="index.html#templates">에디터</a>
+    <a href="index.html#features">가이드</a>
+    <a href="index.html#purchase">구매안내</a>
+  </div>
+  <div class="nav-right-area">
+    <span style="font-size:13px;color:#7B78A8" id="user-email"></span>
+    <button class="nav-btn-ghost" onclick="logout()">로그아웃</button>
+    <a href="index.html" class="nav-btn">스토어</a>
   </div>
 </nav>
 <div class="wrap">
@@ -99,7 +127,7 @@ async function init() {
 }
 
 async function openEditor(templateId, purchaseId) {
-  location.href = `editor.html?template_id=${templateId}`;
+  location.href = `editor.html?tid=${templateId}&pid=${purchaseId}`;
 }
 
 async function logout() {
