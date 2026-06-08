@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결제 실패 — Vkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--violet:#7B72FF;--bg:#F0EFFF;--text:#1A1830;--text-sub:#7B78A8;--glow-v:rgba(123,114,255,0.22)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 700px 500px at 80% -10%,rgba(123,114,255,0.18) 0%,transparent 70%),radial-gradient(ellipse 500px 400px at -10% 60%,rgba(255,110,199,0.14) 0%,transparent 70%),linear-gradient(160deg,#EDEAFF 0%,#F6F4FF 45%,#FFF0FA 100%)}
+.wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:16px}
+.card{background:rgba(255,255,255,0.72);backdrop-filter:blur(28px) saturate(160%);border:1px solid rgba(255,255,255,0.9);border-radius:28px;padding:48px 40px 44px;box-shadow:0 20px 60px rgba(123,114,255,0.12);text-align:center}
+.logo{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--text);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:36px}
+.icon{width:80px;height:80px;border-radius:24px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px;animation:pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes pop{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}
+.title{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-0.4px}
+.sub{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:8px}
+.error-code{font-size:12px;color:rgba(123,120,168,0.5);margin-bottom:28px}
+.btn{width:100%;padding:14px;border-radius:14px;background:linear-gradient(135deg,var(--violet),#A78BFA);color:#fff;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Pretendard',sans-serif;box-shadow:0 6px 20px var(--glow-v);transition:all 0.22s;display:block;text-decoration:none}
+.btn:hover{transform:translateY(-2px)}
+.btn-outline{width:100%;padding:12px;border-radius:14px;background:transparent;border:1.5px solid rgba(123,114,255,0.25);color:var(--violet);font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all 0.2s;margin-top:10px}
+.btn-outline:hover{border-color:var(--violet)}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="wrap">
+  <div class="card">
+    <a href="index.html" class="logo">
+      <svg width="28" height="28" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="10" fill="url(#lBg)"/>
+        <rect x="10" y="14" width="14" height="14" rx="4" fill="url(#lB)" opacity="0.85"/>
+        <rect x="14" y="8" width="13" height="13" rx="4" fill="url(#lP)" opacity="0.9"/>
+        <circle cx="10" cy="22" r="3.5" fill="url(#lC)" opacity="0.8"/>
+        <defs>
+          <linearGradient id="lBg" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#EDE9FF"/><stop offset="1" stop-color="#F5F0FF"/></linearGradient>
+          <linearGradient id="lB" x1="10" y1="14" x2="24" y2="28"><stop stop-color="#7B72FF"/><stop offset="1" stop-color="#A5C8FF"/></linearGradient>
+          <linearGradient id="lP" x1="14" y1="8" x2="27" y2="21"><stop stop-color="#FF8ECF"/><stop offset="1" stop-color="#C7BFFF"/></linearGradient>
+          <linearGradient id="lC" x1="6.5" y1="18.5" x2="13.5" y2="25.5"><stop stop-color="#7EE6FF"/><stop offset="1" stop-color="#7B72FF"/></linearGradient>
+        </defs>
+      </svg>
+      Vkit
+    </a>
+    <div class="icon">😢</div>
+    <div class="title">결제가 취소됐어요</div>
+    <div class="sub">결제 도중 문제가 생겼거나<br>취소하신 것 같아요.</div>
+    <div class="error-code" id="error-msg"></div>
+    <a href="index.html" class="btn">다시 시도하기</a>
+    <button class="btn-outline" onclick="history.back()">이전 페이지로</button>
+  </div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const msg = params.get('message');
+if (msg) document.getElementById('error-msg').textContent = '오류: ' + msg;
+</script>
+</body>
+</html>
