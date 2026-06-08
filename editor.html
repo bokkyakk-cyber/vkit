@@ -264,7 +264,7 @@ const imgCache={};
 function gImg(src){
   if(!src)return null;
   if(imgCache[src])return imgCache[src];
-  const img=new Image();img.onload=()=>{render();drawIllusOv();};
+  const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{render();drawIllusOv();};
   img.src=src;imgCache[src]=img;return img;
 }
 
