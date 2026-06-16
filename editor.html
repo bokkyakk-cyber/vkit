@@ -549,7 +549,7 @@ function undoC(){
 function loadSave(){
   try{
     const d=JSON.parse(localStorage.getItem(SK)||'null');if(!d)return;
-    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;}});
+    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined&&!l.isOffImage)l.visible=sl.visible;}});
     if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;}
   }catch(e){}
 }
