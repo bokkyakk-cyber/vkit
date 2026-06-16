@@ -847,7 +847,7 @@ footer{
         <circle cx="6" cy="6" r="4.5" stroke="#7B78A8" stroke-width="1.5"/>
         <path d="M9.5 9.5L12 12" stroke="#7B78A8" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      템플릿 검색...
+      <input type="text" id="search-input" placeholder="템플릿 검색..." autocomplete="off" style="background:none;border:none;outline:none;font-size:13px;color:var(--text);font-family:inherit;width:100%;caret-color:var(--violet)">
     </div>
     <a href="#purchase" class="nav-btn">마이 스튜디오</a>
     <button class="nav-ham" id="hamBtn" aria-label="메뉴">
@@ -1123,10 +1123,10 @@ function makeCard(t){
     ? `<div class="thumb-blur-bg" style="background-image:url('${t.thumbnail}')"></div><img src="${t.thumbnail}" alt="${t.title}">`
     : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
   return `
-    <div class="template-card fade-in" data-category="${t.category||'etc'}" onclick="location.href='template-detail.html?id=${t.id}'" style="cursor:pointer">
+    <div class="template-card fade-in" data-category="${t.category||'etc'}">
       <div class="template-thumb">
         ${thumb}
-        <div class="thumb-overlay"><button class="preview-btn">자세히 보기</button></div>
+        <div class="thumb-overlay"><button class="preview-btn">미리보기</button></div>
       </div>
       <div class="template-info">
         <div class="template-cat">${cat.label}</div>
@@ -1134,7 +1134,7 @@ function makeCard(t){
         <div class="template-desc">${t.description||''}</div>
         <div class="template-footer">
           <div class="template-price">${priceStr(t.price||0)}</div>
-          <button class="cart-btn" data-id="${t.id}" onclick="event.stopPropagation();handleBuy('${t.id}','${t.title}',${t.price||0})">
+          <button class="cart-btn" data-id="${t.id}" onclick="handleBuy('${t.id}','${t.title}',${t.price||0})">
             ${CART_SVG} 구매하기
           </button>
         </div>
@@ -1156,7 +1156,8 @@ async function loadTemplates(category='all'){
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">등록된 템플릿이 없어요 🥲</div>';
       return;
     }
-    grid.innerHTML = data.map(makeCard).join('');
+    allTemplates = data;
+    filterAndRender();
     // 페이드인 재등록
     grid.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
   } catch(e) {
@@ -1243,7 +1244,8 @@ document.querySelectorAll('.cat-tab').forEach((tab, idx)=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
-    loadTemplates(CAT_TAB_MAP[idx] || 'all');
+    currentCategory = CAT_TAB_MAP[idx] || 'all';
+    filterAndRender();
   });
 });
 
