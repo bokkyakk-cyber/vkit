@@ -11,8 +11,7 @@
 <script src="https://js.tosspayments.com/v1/payment"></script>
 <style>
 :root{
-  --violet:#7B72FF;--pink:#FF6EC7;--cyan:#7EE6FF;
-  --lavender:#C7BFFF;--bg:#F0EFFF;--bg2:#F8F7FF;
+  --violet:#7B72FF;--pink:#FF6EC7;--bg:#F0EFFF;--bg2:#F8F7FF;
   --card:rgba(255,255,255,0.72);--border:rgba(180,170,255,0.28);
   --text:#1A1830;--text-sub:#7B78A8;--text-3:#A8A5C8;
   --shadow:rgba(123,114,255,0.16);--accent:#7c5af0;
@@ -34,72 +33,82 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .nav-btn{background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(123,114,255,.22);transition:all .2s;white-space:nowrap;font-family:'Pretendard',sans-serif}
 .nav-btn-ghost{background:rgba(123,114,255,.08);color:#7B72FF;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1.5px solid rgba(123,114,255,.2);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Pretendard',sans-serif}
 
-/* 레이아웃 */
-.page{position:relative;z-index:1;padding-top:88px;padding-bottom:60px;max-width:1160px;margin:0 auto;padding-left:clamp(16px,4vw,40px);padding-right:clamp(16px,4vw,40px)}
+/* 페이지 */
+.page{position:relative;z-index:1;padding-top:88px;padding-bottom:80px;max-width:1100px;margin:0 auto;padding-left:clamp(16px,4vw,40px);padding-right:clamp(16px,4vw,40px)}
 .breadcrumb{font-size:12px;color:var(--text-sub);margin-bottom:20px;display:flex;align-items:center;gap:6px}
-.breadcrumb a{color:var(--text-sub);text-decoration:none}
-.breadcrumb a:hover{color:var(--violet)}
+.breadcrumb a{color:var(--text-sub);text-decoration:none}.breadcrumb a:hover{color:var(--violet)}
 
-/* 상단 정보 영역 */
-.detail-top{display:grid;grid-template-columns:1fr 340px;gap:32px;margin-bottom:32px;align-items:start}
+/* 상단 그리드 */
+.detail-top{display:grid;grid-template-columns:1fr 320px;gap:28px;margin-bottom:32px;align-items:start}
 @media(max-width:768px){.detail-top{grid-template-columns:1fr}}
 
 /* 썸네일 */
-.thumb-box{background:var(--card);border-radius:var(--r);border:1.5px solid var(--border);overflow:hidden;aspect-ratio:16/9;position:relative;box-shadow:0 8px 32px var(--shadow)}
-.thumb-box img{width:100%;height:100%;object-fit:contain;display:block}
-.thumb-box .thumb-blur-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(18px) brightness(.85) saturate(1.2);transform:scale(1.1);z-index:0}
-.thumb-box img{position:relative;z-index:1}
-.thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#1a1040,#2d1b69)}
+.thumb-box{background:#0d0a1f;border-radius:var(--r);overflow:hidden;position:relative;box-shadow:0 12px 40px var(--shadow);line-height:0}
+.thumb-box .thumb-blur-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(18px) brightness(.7) saturate(1.2);transform:scale(1.15);z-index:0}
+.thumb-box img{width:100%;height:auto;display:block;position:relative;z-index:1;object-fit:contain}
+.thumb-placeholder{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:56px;background:linear-gradient(135deg,#1a1040,#2d1b69)}
 
 /* 구매 패널 */
 .buy-panel{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--r);border:1.5px solid var(--border);padding:24px;box-shadow:0 8px 32px var(--shadow);position:sticky;top:80px}
-.buy-title{font-size:18px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:8px}
-.buy-cat{font-size:11px;font-weight:700;color:var(--violet);background:rgba(123,114,255,.1);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:12px;letter-spacing:.04em}
-.buy-desc{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:16px}
+.buy-cat{font-size:11px;font-weight:700;color:var(--violet);background:rgba(123,114,255,.1);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;letter-spacing:.04em}
+.buy-title{font-size:20px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:8px}
+.buy-desc{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:14px}
 .buy-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
 .buy-tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(180,170,255,.15);color:var(--text-sub);border:1px solid var(--border)}
-.buy-price{font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px;font-family:'Nunito',sans-serif}
-.buy-price-sub{font-size:12px;color:var(--text-3);margin-bottom:20px}
-.btn-buy{width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;font-size:15px;font-weight:800;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(123,114,255,.35);transition:all .22s;font-family:'Pretendard',sans-serif;letter-spacing:.2px;margin-bottom:10px}
+.buy-price{font-size:30px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif;line-height:1}
+.buy-price-sub{font-size:11px;color:var(--text-3);margin-top:4px;margin-bottom:20px}
+.btn-buy{width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;font-size:15px;font-weight:800;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(123,114,255,.35);transition:all .22s;font-family:'Pretendard',sans-serif;margin-bottom:10px;display:block}
 .btn-buy:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(123,114,255,.45)}
 .btn-buy:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.btn-try{width:100%;padding:12px;border-radius:12px;background:rgba(123,114,255,.08);color:var(--violet);font-size:13px;font-weight:700;border:1.5px solid rgba(123,114,255,.2);cursor:pointer;transition:all .2s;font-family:'Pretendard',sans-serif}
+.btn-try{width:100%;padding:12px;border-radius:12px;background:rgba(123,114,255,.08);color:var(--violet);font-size:13px;font-weight:700;border:1.5px solid rgba(123,114,255,.2);cursor:pointer;transition:all .2s;font-family:'Pretendard',sans-serif;display:block}
 .btn-try:hover{background:rgba(123,114,255,.15)}
-.buy-notice-mini{margin-top:14px;padding:12px;background:rgba(255,200,50,.08);border-radius:var(--r-sm);border:1px solid rgba(255,200,50,.2)}
-.buy-notice-mini p{font-size:11px;color:var(--text-sub);line-height:1.7}
-.buy-notice-mini p+p{margin-top:4px}
-
-/* 탭 영역 */
-.tab-wrap{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--r);border:1.5px solid var(--border);overflow:hidden;box-shadow:0 4px 20px var(--shadow)}
-.tab-header{display:flex;border-bottom:1.5px solid var(--border);background:rgba(240,238,255,.4)}
-.tab-btn{flex:1;padding:14px;font-size:13px;font-weight:700;color:var(--text-sub);border:none;background:none;cursor:pointer;transition:all .2s;font-family:'Pretendard',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1.5px}
-.tab-btn.active{color:var(--violet);border-bottom-color:var(--violet);background:rgba(123,114,255,.06)}
-.tab-content{display:none;padding:24px}
-.tab-content.active{display:block}
+.buy-notice-mini{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.buy-notice-mini p{font-size:11.5px;color:var(--text-sub);display:flex;align-items:flex-start;gap:6px;line-height:1.5}
 
 /* 유의사항 */
-.notice-section h3{font-size:14px;font-weight:800;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.notice-list{display:flex;flex-direction:column;gap:8px}
+.notice-card{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--r);border:1.5px solid var(--border);padding:28px;box-shadow:0 4px 20px var(--shadow)}
+.notice-card h3{font-size:15px;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.notice-list{display:flex;flex-direction:column;gap:10px}
 .notice-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-sub);line-height:1.65}
-.notice-item::before{content:'•';color:var(--violet);font-weight:900;flex-shrink:0;margin-top:1px}
-
-/* 체험 에디터 */
-.trial-wrap{position:relative}
-.trial-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,180,50,.1);border:1px solid rgba(255,180,50,.25);border-radius:var(--r-sm);margin-bottom:16px;font-size:12px;color:#a07010;font-weight:600}
-.trial-canvas-wrap{position:relative;border-radius:var(--r-md);overflow:hidden;box-shadow:0 8px 32px var(--shadow)}
-#trial-canvas-area{background:#1a1535;border-radius:var(--r-md);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:300px}
-#trial-canvas{display:block}
-#trial-wm{position:absolute;inset:0;pointer-events:none;z-index:20;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.trial-sidebar{margin-top:16px;background:rgba(255,255,255,.6);border-radius:var(--r-md);border:1.5px solid var(--border);overflow:hidden;max-height:360px;overflow-y:auto}
-.trial-sidebar::-webkit-scrollbar{width:3px}
-.trial-sidebar::-webkit-scrollbar-thumb{background:rgba(124,90,240,.2);border-radius:2px}
+.notice-dot{width:5px;height:5px;border-radius:50%;background:var(--violet);flex-shrink:0;margin-top:7px}
 
 /* 로딩 */
-.loading-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text-sub);font-size:13px}
-.loading-spin{width:28px;height:28px;border:2.5px solid rgba(123,114,255,.2);border-top-color:var(--violet);border-radius:50%;animation:spin .8s linear infinite}
+.loading-box{display:flex;align-items:center;justify-content:center;padding:80px;gap:12px;color:var(--text-sub);font-size:13px;aspect-ratio:16/9}
+.loading-spin{width:28px;height:28px;border:2.5px solid rgba(123,114,255,.2);border-top-color:var(--violet);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* 알림 토스트 */
+/* 체험 팝업 모달 */
+#trial-modal{position:fixed;inset:0;z-index:9000;display:none;flex-direction:column;background:rgba(15,12,40,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#trial-modal.open{display:flex}
+.trial-topbar{height:56px;display:flex;align-items:center;padding:0 20px;gap:12px;background:rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.trial-topbar-title{font-size:14px;font-weight:700;color:#fff;flex:1}
+.trial-badge{padding:3px 10px;font-size:10px;font-weight:700;background:rgba(255,180,50,.18);color:#f0b030;border-radius:20px;border:1px solid rgba(255,180,50,.3);letter-spacing:.04em}
+.trial-close{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s}
+.trial-close:hover{background:rgba(255,255,255,.18)}
+.trial-body{flex:1;display:flex;overflow:hidden;min-height:0}
+.trial-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+#trial-canvas{display:block;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#trial-wm{position:absolute;inset:20px;pointer-events:none;z-index:10;overflow:hidden;border-radius:10px}
+.trial-sidebar-wrap{width:280px;min-width:280px;background:rgba(255,255,255,.04);border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;display:flex;flex-direction:column}
+.trial-sidebar-wrap::-webkit-scrollbar{width:3px}
+.trial-sidebar-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.trial-group-label{padding:10px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
+.trial-field{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.trial-field-label{font-size:10.5px;color:rgba(255,255,255,.45);margin-bottom:5px;font-weight:600}
+.trial-input{width:100%;font-size:12.5px;padding:7px 10px;border:1.5px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.07);color:#fff;font-family:'Pretendard',sans-serif;outline:none;transition:border-color .15s}
+.trial-input:focus{border-color:rgba(123,114,255,.6);background:rgba(255,255,255,.1)}
+.trial-img-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(123,114,255,.15);border:1.5px solid rgba(123,114,255,.3);border-radius:8px;font-size:11.5px;font-weight:600;color:#a89cff;cursor:pointer;transition:all .15s}
+.trial-img-btn:hover{background:rgba(123,114,255,.25)}
+.trial-buy-cta{padding:16px;background:rgba(123,114,255,.12);border-top:1px solid rgba(123,114,255,.2);flex-shrink:0}
+.trial-buy-cta p{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px;text-align:center;line-height:1.5}
+.trial-buy-btn{width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:'Pretendard',sans-serif;box-shadow:0 4px 16px rgba(123,114,255,.4)}
+
+@media(max-width:640px){
+  .trial-sidebar-wrap{display:none}
+  .trial-canvas-wrap{padding:12px}
+}
+
+/* 토스트 */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1535;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -130,14 +139,10 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   </div>
 
   <div class="detail-top">
-    <!-- 썸네일 -->
-    <div>
-      <div class="thumb-box" id="thumb-box">
-        <div class="loading-box"><div class="loading-spin"></div></div>
-      </div>
+    <div class="thumb-box" id="thumb-box">
+      <div class="loading-box"><div class="loading-spin"></div></div>
     </div>
 
-    <!-- 구매 패널 -->
     <div class="buy-panel">
       <div id="buy-cat" class="buy-cat">불러오는 중...</div>
       <div id="buy-title" class="buy-title">—</div>
@@ -146,7 +151,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       <div id="buy-price" class="buy-price">—</div>
       <div class="buy-price-sub">부가세 포함 · 1회 구매 후 영구 사용</div>
       <button class="btn-buy" id="btn-buy" onclick="handleBuy()">구매하기</button>
-      <button class="btn-try" onclick="goToTrial()">✏️ 무료 체험해보기</button>
+      <button class="btn-try" onclick="openTrial()">✏️ 무료 체험해보기</button>
       <div class="buy-notice-mini">
         <p>📦 구매 후 마이페이지에서 바로 사용 가능해요</p>
         <p>🔁 디지털 상품 특성상 환불이 제한될 수 있어요</p>
@@ -154,50 +159,39 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     </div>
   </div>
 
-  <!-- 탭 -->
-  <div class="tab-wrap">
-    <div class="tab-header">
-      <button class="tab-btn active" onclick="switchTab('preview',this)">🖼 미리보기</button>
-      <button class="tab-btn" onclick="switchTab('trial',this)">✏️ 체험하기</button>
-      <button class="tab-btn" onclick="switchTab('notice',this)">📋 유의사항</button>
+  <!-- 유의사항 -->
+  <div class="notice-card">
+    <h3>⚠️ 구매 전 꼭 읽어주세요</h3>
+    <div class="notice-list">
+      <div class="notice-item"><div class="notice-dot"></div>본 템플릿은 디지털 콘텐츠로, 다운로드 후 환불이 제한될 수 있습니다.</div>
+      <div class="notice-item"><div class="notice-dot"></div>구매한 템플릿은 개인 방송 활동에 한해 사용 가능합니다. 재판매 및 재배포는 금지됩니다.</div>
+      <div class="notice-item"><div class="notice-dot"></div>템플릿 편집은 Vkit 브라우저 에디터를 통해서만 가능합니다.</div>
+      <div class="notice-item"><div class="notice-dot"></div>일러스트 이미지는 포함되지 않으며, 직접 업로드하여 사용하실 수 있습니다.</div>
+      <div class="notice-item"><div class="notice-dot"></div>완성된 이미지는 PNG/JPG 파일로 다운로드할 수 있습니다.</div>
+      <div class="notice-item"><div class="notice-dot"></div>템플릿 관련 문의는 고객센터 이메일로 연락해주세요.</div>
     </div>
+  </div>
+</div>
 
-    <!-- 미리보기 탭 -->
-    <div class="tab-content active" id="tab-preview">
-      <div id="preview-img-wrap" style="border-radius:var(--r-sm);overflow:hidden;background:#0d0a1f">
-        <div class="loading-box"><div class="loading-spin"></div></div>
+<!-- 체험 모달 -->
+<div id="trial-modal">
+  <div class="trial-topbar">
+    <div class="trial-topbar-title" id="trial-topbar-title">체험 모드</div>
+    <div class="trial-badge">⚠️ VKIT 체험판 — 저장 불가</div>
+    <button class="trial-close" onclick="closeTrial()">✕ 닫기</button>
+  </div>
+  <div class="trial-body">
+    <div class="trial-canvas-wrap">
+      <canvas id="trial-canvas"></canvas>
+      <div id="trial-wm"></div>
+    </div>
+    <div class="trial-sidebar-wrap" id="trial-sidebar">
+      <div style="display:flex;align-items:center;justify-content:center;height:200px">
+        <div style="text-align:center;color:rgba(255,255,255,.3);font-size:13px">불러오는 중...</div>
       </div>
-    </div>
-
-    <!-- 체험 탭 -->
-    <div class="tab-content" id="tab-trial">
-      <div class="trial-wrap">
-        <div class="trial-banner">
-          ⚠️ 체험 모드 — 편집 내용은 저장되지 않으며 워터마크가 표시됩니다
-        </div>
-        <div class="trial-canvas-wrap">
-          <div id="trial-canvas-area">
-            <div class="loading-box" id="trial-loading"><div class="loading-spin"></div><span>에디터 불러오는 중...</span></div>
-            <canvas id="trial-canvas" style="display:none"></canvas>
-          </div>
-          <div id="trial-wm"></div>
-        </div>
-        <div class="trial-sidebar" id="trial-sidebar" style="display:none"></div>
-      </div>
-    </div>
-
-    <!-- 유의사항 탭 -->
-    <div class="tab-content" id="tab-notice">
-      <div class="notice-section">
-        <h3>⚠️ 구매 전 꼭 읽어주세요</h3>
-        <div class="notice-list">
-          <div class="notice-item">본 템플릿은 디지털 콘텐츠로, 다운로드 후 환불이 제한될 수 있습니다.</div>
-          <div class="notice-item">구매한 템플릿은 개인 방송 활동에 한해 사용 가능합니다. 재판매 및 재배포는 금지됩니다.</div>
-          <div class="notice-item">템플릿 편집은 Vkit 에디터를 통해서만 가능하며, 브라우저 환경에서 동작합니다.</div>
-          <div class="notice-item">일러스트 이미지는 포함되어 있지 않으며, 직접 업로드하여 사용하실 수 있습니다.</div>
-          <div class="notice-item">완성된 이미지는 PNG/JPG로 다운로드할 수 있습니다.</div>
-          <div class="notice-item">템플릿 관련 문의는 고객센터 이메일로 연락해주세요.</div>
-        </div>
+      <div class="trial-buy-cta">
+        <p>마음에 드셨나요?<br>구매하면 저장 및 다운로드가 가능해요</p>
+        <button class="trial-buy-btn" onclick="closeTrial();handleBuy()">구매하기</button>
       </div>
     </div>
   </div>
@@ -209,94 +203,56 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 const SB_URL='https://fvuyimvkozbcnzudxsdp.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
 const TOSS_CLIENT_KEY='test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
-const { createClient } = supabase;
-const sb = createClient(SB_URL, SB_KEY);
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
 
-const TEMPLATE_ID = new URLSearchParams(location.search).get('id');
+const TEMPLATE_ID=new URLSearchParams(location.search).get('id');
 const CAT_MAP={schedule:{label:'스케줄',icon:'📅'},overlay:{label:'오버레이',icon:'🎮'},chat:{label:'채팅창',icon:'💬'},sticker:{label:'스티커',icon:'✨'},background:{label:'배경',icon:'🖼'},intro:{label:'인트로',icon:'🎬'},etc:{label:'기타',icon:'🌟'}};
+const ROLE_LABELS={"mainText":"메인타이틀","subText":"서브타이틀","timeText":"시간","offImage":"OFF이미지","bgObject":"배경오브젝트","date":"날짜","memo":"메모"};
+const DAYS=["월","화","수","목","금","토","일"];
 
-let templateData = null;
-let currentUser = null;
-let trialLayers = [], trialGroups = {}, trialCanvasW = 1920, trialCanvasH = 1080, trialBg = null;
-let trialInited = false;
-const imgCache = {};
+let templateData=null;
+let trialLayers=[],trialGroups={},trialCanvasW=1920,trialCanvasH=1080,trialBg=null;
+let trialInited=false,trialS=1,trialDpr=1;
+const imgCache={};
 
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
+const trialCanvas=document.getElementById('trial-canvas');
+const trialCtx=trialCanvas.getContext('2d');
 
-function getSession(){
-  try{
-    for(const k of Object.keys(localStorage)){
-      if(k.startsWith('sb-')&&k.endsWith('-auth-token')){
-        const d=JSON.parse(localStorage.getItem(k));
-        if(d?.access_token)return d;
-      }
-    }
-  }catch(e){}
-  return null;
-}
-
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function priceStr(p){return p===0?'무료':p.toLocaleString('ko-KR')+'원'}
+function getSession(){try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-')&&k.endsWith('-auth-token')){const d=JSON.parse(localStorage.getItem(k));if(d?.access_token)return d;}}}catch(e){}return null;}
 
-// ── 네비 초기화 ──
 async function initNav(){
   const {data:{user}}=await sb.auth.getUser();
-  currentUser=user;
   const nr=document.getElementById('nav-right');
-  if(user){
-    nr.innerHTML=`<a href="mypage.html" class="nav-btn-ghost">마이페이지</a><button class="nav-btn" onclick="doLogout()">로그아웃</button>`;
-  }
+  if(user){nr.innerHTML=`<a href="mypage.html" class="nav-btn-ghost">마이페이지</a><button class="nav-btn" onclick="doLogout()">로그아웃</button>`;}
 }
 async function doLogout(){await sb.auth.signOut();location.reload();}
 
-// ── 템플릿 로드 ──
 async function loadTemplate(){
   if(!TEMPLATE_ID){document.body.innerHTML='<div style="text-align:center;padding:80px;font-size:16px;color:#888">잘못된 접근이에요</div>';return;}
   const res=await fetch(`${SB_URL}/rest/v1/templates?id=eq.${TEMPLATE_ID}&select=id,title,description,category,price,thumbnail,tags,canvas_w,canvas_h,template_data&limit=1`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
   const data=await res.json();
-  if(!data?.length){document.body.innerHTML='<div style="text-align:center;padding:80px;font-size:16px;color:#888">템플릿을 찾을 수 없어요</div>';return;}
-  const t=data[0];
-  templateData=t;
+  if(!data?.length){document.body.innerHTML='<div style="text-align:center;padding:80px;color:#888">템플릿을 찾을 수 없어요</div>';return;}
+  const t=data[0];templateData=t;
 
-  // 브레드크럼
   document.getElementById('bc-title').textContent=t.title;
   document.title=t.title+' — Vkit';
-
-  // 카테고리
   const cat=CAT_MAP[t.category]||{label:t.category||'기타',icon:'✨'};
   document.getElementById('buy-cat').textContent=cat.label;
-
-  // 제목/설명
   document.getElementById('buy-title').textContent=t.title;
   document.getElementById('buy-desc').textContent=t.description||'';
-
-  // 태그
   const tags=Array.isArray(t.tags)?t.tags:(t.tags?[t.tags]:[]);
   document.getElementById('buy-tags').innerHTML=tags.map(tg=>`<span class="buy-tag">#${tg}</span>`).join('');
-
-  // 가격
   document.getElementById('buy-price').textContent=priceStr(t.price||0);
 
-  // 썸네일
   const tb=document.getElementById('thumb-box');
   if(t.thumbnail){
     tb.innerHTML=`<div class="thumb-blur-bg" style="background-image:url('${t.thumbnail}')"></div><img src="${t.thumbnail}" alt="${t.title}">`;
   } else {
     tb.innerHTML=`<div class="thumb-placeholder">${cat.icon}</div>`;
   }
-
-  // 미리보기 탭
-  const pw=document.getElementById('preview-img-wrap');
-  if(t.thumbnail){
-    pw.innerHTML=`<img src="${t.thumbnail}" alt="${t.title}" style="width:100%;display:block;border-radius:var(--r-sm)">`;
-  } else {
-    pw.innerHTML=`<div class="thumb-placeholder" style="height:300px">${cat.icon}</div>`;
-  }
-
-  // 구매 여부 확인 후 버튼 업데이트
   await checkPurchase();
 }
 
@@ -305,59 +261,37 @@ async function checkPurchase(){
   const btn=document.getElementById('btn-buy');
   if(!user){btn.textContent='로그인 후 구매하기';return;}
   if(templateData.price===0){btn.textContent='무료로 받기';return;}
-  // 이미 구매했는지 확인
   const res=await fetch(`${SB_URL}/rest/v1/purchases?user_id=eq.${user.id}&template_id=eq.${TEMPLATE_ID}&status=in.(paid,done)&select=id&limit=1`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
   const data=await res.json();
-  if(data?.length){
-    btn.textContent='✅ 구매 완료 — 에디터 열기';
-    btn.onclick=()=>location.href=`editor.html?template_id=${TEMPLATE_ID}`;
-  }
+  if(data?.length){btn.textContent='✅ 에디터 열기';btn.onclick=()=>location.href=`editor.html?template_id=${TEMPLATE_ID}`;}
 }
 
-// ── 구매 ──
 async function handleBuy(){
   if(!templateData)return;
   const {data:{user}}=await sb.auth.getUser();
   if(!user){location.href=`login.html?redirect=${encodeURIComponent(location.href)}`;return;}
-
   if(templateData.price===0){
     const {error}=await sb.from('purchases').insert({user_id:user.id,template_id:TEMPLATE_ID,amount:0,payment_key:'free',order_id:`free_${TEMPLATE_ID}_${Date.now()}`,status:'done'});
     if(!error){showToast('🎉 무료 템플릿이 추가됐어요!');setTimeout(()=>location.href='mypage.html',1500);}
     return;
   }
-
   const orderId=`vkit_${TEMPLATE_ID.slice(0,8)}_${Date.now()}`;
   const tossPayments=TossPayments(TOSS_CLIENT_KEY);
-  tossPayments.requestPayment('카드',{
-    amount:templateData.price,
-    orderId,
-    orderName:templateData.title,
-    customerName:user.email,
-    customerEmail:user.email,
-    successUrl:`${location.origin}/payment-success.html?templateId=${TEMPLATE_ID}`,
-    failUrl:`${location.origin}/payment-fail.html`,
-  }).catch(err=>{if(err.code!=='USER_CANCEL')showToast('결제 오류: '+err.message);});
+  tossPayments.requestPayment('카드',{amount:templateData.price,orderId,orderName:templateData.title,customerName:user.email,customerEmail:user.email,successUrl:`${location.origin}/payment-success.html?templateId=${TEMPLATE_ID}`,failUrl:`${location.origin}/payment-fail.html`}).catch(err=>{if(err.code!=='USER_CANCEL')showToast('결제 오류: '+err.message);});
 }
 
-// ── 체험 에디터 열기 탭으로 이동 ──
-function goToTrial(){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('.tab-btn')[1].classList.add('active');
-  document.getElementById('tab-trial').classList.add('active');
+// ── 체험 모달 ──────────────────────────────────────────
+function openTrial(){
+  document.getElementById('trial-modal').classList.add('open');
+  document.body.style.overflow='hidden';
   if(!trialInited)initTrialEditor();
 }
-
-// ── 탭 전환 ──
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-  if(name==='trial'&&!trialInited)initTrialEditor();
+function closeTrial(){
+  document.getElementById('trial-modal').classList.remove('open');
+  document.body.style.overflow='';
 }
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTrial();});
 
-// ── 체험 에디터 ──────────────────────────────────────────
 function gImg(src){
   if(!src)return null;
   if(imgCache[src])return imgCache[src];
@@ -365,15 +299,9 @@ function gImg(src){
   img.onload=()=>trialRender();img.src=src;imgCache[src]=img;return img;
 }
 
-const DAYS=["월","화","수","목","금","토","일"];
-const ROLE_LABELS={"mainText":"메인타이틀","subText":"서브타이틀","timeText":"시간","offImage":"OFF이미지","bgObject":"배경오브젝트","date":"날짜","memo":"메모"};
-
 function initTrialEditor(){
   trialInited=true;
-  if(!templateData?.template_data){
-    document.getElementById('trial-loading').innerHTML='<span style="color:#888">템플릿 데이터가 없어요</span>';
-    return;
-  }
+  if(!templateData?.template_data)return;
   try{
     const d=JSON.parse(templateData.template_data);
     trialLayers=JSON.parse(JSON.stringify(d.layers||[]));
@@ -382,29 +310,21 @@ function initTrialEditor(){
     trialCanvasH=d.canvasH||templateData.canvas_h||1080;
     trialBg=d.bgImage||null;
     (d.loadedFonts||[]).forEach(f=>{if(f.type==='web'&&f.url){const l=document.createElement('link');l.rel='stylesheet';l.href=f.url;document.head.appendChild(l);}});
-    document.getElementById('trial-loading').style.display='none';
-    document.getElementById('trial-canvas').style.display='block';
-    document.getElementById('trial-sidebar').style.display='block';
+    document.getElementById('trial-topbar-title').textContent=(templateData.title||'체험 모드')+' — 체험 모드';
     requestAnimationFrame(()=>{trialFit();trialRender();buildTrialUI();buildWatermark();});
-  }catch(e){
-    document.getElementById('trial-loading').innerHTML='<span style="color:#e84040">에디터 로드 실패: '+e.message+'</span>';
-  }
+  }catch(e){console.error(e);}
 }
 
-const trialCanvas=document.getElementById('trial-canvas');
-const trialCtx=trialCanvas.getContext('2d');
-let trialS=1,trialDpr=1;
-
 function trialFit(){
-  const area=document.getElementById('trial-canvas-area');
-  const maxW=area.offsetWidth||window.innerWidth-80;
-  const s=Math.min(1,maxW/trialCanvasW);
+  const wrap=document.querySelector('.trial-canvas-wrap');
+  const maxW=(wrap.offsetWidth||800)-40;
+  const maxH=(wrap.offsetHeight||600)-40;
+  const s=Math.min(maxW/trialCanvasW,maxH/trialCanvasH,1);
   const dW=Math.round(trialCanvasW*s),dH=Math.round(trialCanvasH*s);
   trialS=s;trialDpr=Math.min(window.devicePixelRatio||1,2);
   trialCanvas.width=Math.round(dW*trialDpr);trialCanvas.height=Math.round(dH*trialDpr);
   trialCanvas.style.cssText='width:'+dW+'px;height:'+dH+'px;display:block';
   trialCtx.scale(trialDpr,trialDpr);
-  document.getElementById('trial-canvas-area').style.height=dH+'px';
 }
 
 function trialRender(){
@@ -420,9 +340,7 @@ function trialRender(){
       const img=gImg(l.src);if(!img||!img.complete||!img.naturalWidth){trialCtx.globalAlpha=1;return;}
       if(l.rotate){const cx=(l.x+l.w/2)*s,cy=(l.y+l.h/2)*s;trialCtx.save();trialCtx.translate(cx,cy);trialCtx.rotate(l.rotate*Math.PI/180);trialCtx.drawImage(img,-l.w*s/2,-l.h*s/2,l.w*s,l.h*s);trialCtx.restore();}
       else trialCtx.drawImage(img,l.x*s,l.y*s,l.w*s,l.h*s);
-    } else if(l.type==='text'){
-      trialDrawTxt(trialCtx,l);
-    }
+    } else if(l.type==='text'){trialDrawTxt(trialCtx,l);}
     trialCtx.globalAlpha=1;
   });
 }
@@ -441,104 +359,84 @@ function trialDrawTxt(c2,l){
   if(l.border&&l.borderColor&&l.borderWidth){
     c2.strokeStyle=l.borderColor;c2.lineWidth=l.borderWidth*s*2;c2.lineJoin='round';
     c2.textBaseline='alphabetic';
-    let tX2=l.align==='left'?(l.x+4)*s:l.align==='right'?(l.x+l.w-4)*s:(l.x+l.w/2)*s;
     c2.textAlign=l.align==='left'?'left':l.align==='right'?'right':'center';
+    const tX2=l.align==='left'?(l.x+4)*s:l.align==='right'?(l.x+l.w-4)*s:(l.x+l.w/2)*s;
     lns.forEach((ln,i)=>c2.strokeText(ln,tX2,sY+i*fs*lh));
   }
   if(l.gradient&&l.gradientColors?.length>=2){
-    const grd=c2.createLinearGradient(l.x*s,l.y*s,l.x*s,( l.y+l.h)*s);
+    const grd=c2.createLinearGradient(l.x*s,l.y*s,l.x*s,(l.y+l.h)*s);
     l.gradientColors.forEach((col,i)=>grd.addColorStop(i/(l.gradientColors.length-1),col));
     c2.fillStyle=grd;
-  } else {
-    c2.fillStyle=l.color||'#000';
-  }
+  } else {c2.fillStyle=l.color||'#000';}
   c2.textBaseline='alphabetic';
   c2.textAlign=l.align==='left'?'left':l.align==='right'?'right':'center';
-  let tX=l.align==='left'?(l.x+4)*s:l.align==='right'?(l.x+l.w-4)*s:(l.x+l.w/2)*s;
+  const tX=l.align==='left'?(l.x+4)*s:l.align==='right'?(l.x+l.w-4)*s:(l.x+l.w/2)*s;
   lns.forEach((ln,i)=>c2.fillText(ln,tX,sY+i*fs*lh));
   c2.restore();
 }
 
-// ── 워터마크 ──
 function buildWatermark(){
   const wm=document.getElementById('trial-wm');
-  const text='VKIT 체험판';
   let html='';
   for(let r=0;r<8;r++){
-    for(let c=0;c<6;c++){
-      html+=`<div style="position:absolute;left:${c*18}%;top:${r*14}%;color:rgba(123,114,255,0.22);font-size:clamp(12px,2vw,18px);font-weight:800;font-family:'Pretendard',sans-serif;transform:rotate(-25deg);white-space:nowrap;letter-spacing:.08em;user-select:none">${text}</div>`;
+    for(let c=0;c<5;c++){
+      html+=`<div style="position:absolute;left:${c*22}%;top:${r*14}%;color:rgba(123,114,255,0.45);font-size:clamp(13px,1.8vw,20px);font-weight:800;font-family:'Pretendard',sans-serif;transform:rotate(-28deg);white-space:nowrap;letter-spacing:.1em;user-select:none;text-shadow:0 1px 3px rgba(0,0,0,.2)">VKIT 체험판</div>`;
     }
   }
   wm.innerHTML=html;
 }
 
-// ── 체험 사이드바 UI ──
 function buildTrialUI(){
-  const groups=trialGroups;
   const sidebar=document.getElementById('trial-sidebar');
-  const gids=Object.keys(groups);
-  if(!gids.length){
-    // 그룹 없으면 레이어 직접 나열
-    const editables=trialLayers.filter(l=>l.clientEditable);
-    sidebar.innerHTML=editables.map(l=>layerRow(l)).join('');
-    return;
+  const gids=Object.keys(trialGroups);
+  const editables=trialLayers.filter(l=>l.clientEditable);
+  if(!editables.length){sidebar.querySelector('div').innerHTML='<div style="text-align:center;color:rgba(255,255,255,.3);font-size:12px;padding:20px">편집 가능한 항목이 없어요</div>';return;}
+
+  let html='';
+  if(gids.length){
+    gids.forEach(gid=>{
+      const g=trialGroups[gid];
+      const gLayers=editables.filter(l=>l.groupId===gid);
+      if(!gLayers.length)return;
+      html+=`<div class="trial-group-label">${g.label||gid}</div>`;
+      html+=gLayers.map(l=>layerRow(l)).join('');
+    });
+  } else {
+    html=editables.map(l=>layerRow(l)).join('');
   }
-  sidebar.innerHTML=gids.map(gid=>{
-    const g=groups[gid];
-    const gLayers=trialLayers.filter(l=>l.groupId===gid&&l.clientEditable);
-    if(!gLayers.length)return'';
-    return`<div style="border-bottom:1px solid rgba(180,170,255,.2)">
-      <div style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--text-sub);background:rgba(240,238,255,.5);letter-spacing:.04em">${g.label||gid}</div>
-      ${gLayers.map(l=>layerRow(l)).join('')}
-    </div>`;
-  }).join('');
+
+  const cta=sidebar.querySelector('.trial-buy-cta');
+  sidebar.innerHTML=html;
+  sidebar.appendChild(cta);
 }
 
 function layerRow(l){
   const roleLabel=ROLE_LABELS[l.role]||l.role||l.id;
   if(l.type==='text'){
-    return`<div style="padding:10px 14px;border-bottom:1px solid rgba(180,170,255,.1)">
-      <div style="font-size:11px;color:var(--text-sub);margin-bottom:5px;font-weight:600">${roleLabel}</div>
-      <input style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid rgba(180,170,255,.35);border-radius:8px;background:rgba(255,255,255,.8);color:var(--text);font-family:'Pretendard',sans-serif;outline:none"
-        value="${(l.text||'').replace(/"/g,'&quot;')}"
-        oninput="updateTrialText('${l.id}',this.value)"
-        onfocus="this.style.borderColor='var(--violet)'"
-        onblur="this.style.borderColor='rgba(180,170,255,.35)'">
+    return`<div class="trial-field">
+      <div class="trial-field-label">${roleLabel}</div>
+      <input class="trial-input" value="${(l.text||'').replace(/"/g,'&quot;')}" oninput="updateTrialText('${l.id}',this.value)" placeholder="텍스트 입력">
     </div>`;
   }
   if(l.type==='image'){
-    return`<div style="padding:10px 14px;border-bottom:1px solid rgba(180,170,255,.1)">
-      <div style="font-size:11px;color:var(--text-sub);margin-bottom:5px;font-weight:600">${roleLabel} (이미지)</div>
-      <label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(123,114,255,.08);border:1.5px solid rgba(123,114,255,.2);border-radius:8px;font-size:12px;font-weight:600;color:var(--violet);cursor:pointer">
-        🖼 이미지 업로드
-        <input type="file" accept="image/*" style="display:none" onchange="updateTrialImage('${l.id}',this)">
-      </label>
+    return`<div class="trial-field">
+      <div class="trial-field-label">${roleLabel}</div>
+      <label class="trial-img-btn">🖼 이미지 업로드<input type="file" accept="image/*" style="display:none" onchange="updateTrialImage('${l.id}',this)"></label>
     </div>`;
   }
   return'';
 }
 
-function updateTrialText(id,val){
-  const l=trialLayers.find(x=>x.id===id);
-  if(l){l.text=val;trialRender();}
-}
-
+function updateTrialText(id,val){const l=trialLayers.find(x=>x.id===id);if(l){l.text=val;trialRender();}}
 function updateTrialImage(id,input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    const l=trialLayers.find(x=>x.id===id);
-    if(l){l.src=e.target.result;imgCache[e.target.result]=null;trialRender();}
-  };
+  reader.onload=e=>{const l=trialLayers.find(x=>x.id===id);if(l){l.src=e.target.result;delete imgCache[e.target.result];trialRender();}};
   reader.readAsDataURL(file);
 }
 
-// ── 초기화 ──
-window.addEventListener('load',async()=>{
-  await initNav();
-  await loadTemplate();
-});
-window.addEventListener('resize',()=>{if(trialInited){trialFit();trialRender();}});
+window.addEventListener('resize',()=>{if(trialInited&&document.getElementById('trial-modal').classList.contains('open')){trialFit();trialRender();}});
+window.addEventListener('load',async()=>{await initNav();await loadTemplate();});
 </script>
 </body>
 </html>
