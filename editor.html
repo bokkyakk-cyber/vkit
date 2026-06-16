@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Vkit 에디터</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -112,7 +112,8 @@ textarea.fctrl{min-height:64px}
 @media(max-width:768px){
   html,body,#app{overflow:hidden;height:100%}
   #main{flex-direction:column}
-  #canvas-area{flex:none;height:45vh;min-height:200px;padding:10px 10px 6px;overflow:auto}
+  #canvas-area{flex:none;height:45vh;min-height:200px;padding:10px 10px 6px;overflow:auto;-webkit-overflow-scrolling:touch}
+  #canvas-cont{touch-action:pan-x pan-y}
   #sidebar{width:100%;min-width:auto;flex:1;border-left:none;border-top:1.5px solid var(--gb);overflow:hidden;display:flex;flex-direction:column}
   #sidebar-inner{flex:1;overflow-y:auto}
   .tb span{display:none}
@@ -287,12 +288,15 @@ function initCanvas(){
   const maxW=areaW-32,maxH=areaH-32;
   const s=Math.min(1,maxW/canvasW,maxH/canvasH);
   const dW=Math.round(canvasW*s),dH=Math.round(canvasH*s);
-  canvas.width=dW;canvas.height=dH;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(dW*dpr);canvas.height=Math.round(dH*dpr);
   canvas.style.cssText='width:'+dW+'px;height:'+dH+'px;display:block';
-  ovCanvas.width=dW;ovCanvas.height=dH;
+  ctx.scale(dpr,dpr);
+  ovCanvas.width=Math.round(dW*dpr);ovCanvas.height=Math.round(dH*dpr);
   ovCanvas.style.cssText='position:absolute;top:0;left:0;width:'+dW+'px;height:'+dH+'px';
   document.getElementById('canvas-cont').style.cssText='position:relative;width:'+dW+'px;height:'+dH+'px';
   canvas.dataset.s=String(s);
+  canvas.dataset.dpr=String(dpr);
   render();drawIllusOv();
 }
 
@@ -320,10 +324,12 @@ function drawTxt(c2,l){
 }
 function render(){
   const s=parseFloat(canvas.dataset.s)||1;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const dpr=parseFloat(canvas.dataset.dpr)||1;
+  const cW=canvas.width/dpr,cH=canvas.height/dpr;
+  ctx.clearRect(0,0,cW,cH);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,cW,cH);
   if(illusData){const img=gImg(illusData);if(img&&img.complete&&img.naturalWidth){ctx.save();const iw=img.naturalWidth*illusScale,ih=img.naturalHeight*illusScale;const cx=(illusX+iw/2)*s,cy=(illusY+ih/2)*s;ctx.translate(cx,cy);ctx.rotate(illusRot*Math.PI/180);ctx.drawImage(img,-iw*s/2,-ih*s/2,iw*s,ih*s);ctx.restore();}}
-  if(bgData){const img=gImg(bgData);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,canvas.width,canvas.height);}
+  if(bgData){const img=gImg(bgData);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,cW,cH);}
   layers.forEach(l=>{
     if(l.visible===false)return;ctx.globalAlpha=l.opacity??1;
     if(l.type==='image'&&l.src){const img=gImg(l.src);if(!img||!img.complete||!img.naturalWidth){ctx.globalAlpha=1;return;}if(l.rotate){const cx=(l.x+l.w/2)*s,cy=(l.y+l.h/2)*s;ctx.save();ctx.translate(cx,cy);ctx.rotate(l.rotate*Math.PI/180);ctx.drawImage(img,-l.w*s/2,-l.h*s/2,l.w*s,l.h*s);ctx.restore();}else ctx.drawImage(img,l.x*s,l.y*s,l.w*s,l.h*s);}
@@ -333,7 +339,8 @@ function render(){
 }
 
 function drawIllusOv(){
-  ovCtx.clearRect(0,0,ovCanvas.width,ovCanvas.height);
+  const dpr=parseFloat(canvas.dataset.dpr)||1;
+  ovCtx.clearRect(0,0,ovCanvas.width/dpr,ovCanvas.height/dpr);
   if(!illusData)return;
   const img=gImg(illusData);if(!img||!img.complete||!img.naturalWidth)return;
   const s=parseFloat(canvas.dataset.s)||1;
