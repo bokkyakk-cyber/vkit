@@ -282,9 +282,7 @@ async function handleBuy(){
 
 // ── 체험 모달 ──────────────────────────────────────────
 function openTrial(){
-  document.getElementById('trial-modal').classList.add('open');
-  document.body.style.overflow='hidden';
-  if(!trialInited)initTrialEditor();
+  window.open(`editor.html?template_id=${TEMPLATE_ID}&trial=true`,'_blank');
 }
 function closeTrial(){
   document.getElementById('trial-modal').classList.remove('open');

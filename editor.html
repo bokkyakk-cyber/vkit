@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Vkit 에디터</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -112,8 +112,7 @@ textarea.fctrl{min-height:64px}
 @media(max-width:768px){
   html,body,#app{overflow:hidden;height:100%}
   #main{flex-direction:column}
-  #canvas-area{flex:none;height:45vh;min-height:200px;padding:10px 10px 6px;overflow:auto;-webkit-overflow-scrolling:touch}
-  #canvas-cont{touch-action:pan-x pan-y}
+  #canvas-area{flex:none;height:45vh;min-height:200px;padding:10px 10px 6px;overflow:auto}
   #sidebar{width:100%;min-width:auto;flex:1;border-left:none;border-top:1.5px solid var(--gb);overflow:hidden;display:flex;flex-direction:column}
   #sidebar-inner{flex:1;overflow-y:auto}
   .tb span{display:none}
@@ -168,6 +167,7 @@ const ROLE_LABELS={"mainText":"메인타이틀","subText":"서브타이틀","tim
 
 // ── URL 파라미터 ──
 const TEMPLATE_ID=new URLSearchParams(location.search).get('template_id');
+const TRIAL_MODE=new URLSearchParams(location.search).get('trial')==='true';
 
 // ── 전역 상태 ── (initEditor()에서 채워짐)
 let layers=[];
@@ -209,16 +209,20 @@ function getSession(){
 async function initEditor(){
   showLoading('에디터 불러오는 중...');
   if(!TEMPLATE_ID){showError('잘못된 접근','템플릿 ID가 없어요.','스토어로 돌아가기','/index.html');return;}
-  const session=getSession();
-  if(!session?.access_token){showError('로그인이 필요해요','에디터를 사용하려면 로그인이 필요해요.','로그인하기','/login.html?redirect='+encodeURIComponent(location.href));return;}
-  const uid=session.user?.id;
-  const tok=session.access_token;
-  showLoading('구매 내역 확인 중...');
-  try{
-    const pr=await fetch(`${SUPABASE_URL}/rest/v1/purchases?user_id=eq.${uid}&template_id=eq.${TEMPLATE_ID}&status=in.(paid,done)&select=id&limit=1`,{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${tok}`}});
-    const pdata=await pr.json();
-    if(!Array.isArray(pdata)||!pdata.length){showError('구매가 필요해요','이 템플릿을 구매한 후 에디터를 사용할 수 있어요.','스토어에서 보기','/index.html');return;}
-  }catch(e){showError('오류 발생','구매 확인 중 오류가 발생했어요.<br>'+e.message,'새로고침','javascript:location.reload()');return;}
+  // 체험모드면 로그인/구매 체크 스킵
+  let uid='trial',tok=null;
+  if(!TRIAL_MODE){
+    const session=getSession();
+    if(!session?.access_token){showError('로그인이 필요해요','에디터를 사용하려면 로그인이 필요해요.','로그인하기','/login.html?redirect='+encodeURIComponent(location.href));return;}
+    uid=session.user?.id;
+    tok=session.access_token;
+    showLoading('구매 내역 확인 중...');
+    try{
+      const pr=await fetch(`${SUPABASE_URL}/rest/v1/purchases?user_id=eq.${uid}&template_id=eq.${TEMPLATE_ID}&status=in.(paid,done)&select=id&limit=1`,{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${tok}`}});
+      const pdata=await pr.json();
+      if(!Array.isArray(pdata)||!pdata.length){showError('구매가 필요해요','이 템플릿을 구매한 후 에디터를 사용할 수 있어요.','스토어에서 보기','/index.html');return;}
+    }catch(e){showError('오류 발생','구매 확인 중 오류가 발생했어요.<br>'+e.message,'새로고침','javascript:location.reload()');return;}
+  }
   showLoading('템플릿 불러오는 중...');
   try{
     const tr=await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${TEMPLATE_ID}&select=title,template_data,canvas_w,canvas_h&limit=1`,{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${SUPABASE_ANON_KEY}`}});
@@ -231,12 +235,12 @@ async function initEditor(){
     canvasW=d.canvasW||t.canvas_w||1920;
     canvasH=d.canvasH||t.canvas_h||1080;
     bgData=d.bgImage||null;
-    SK=`vkit_${TEMPLATE_ID}_${uid}`;
+    SK=TRIAL_MODE?'__trial_no_save__':`vkit_${TEMPLATE_ID}_${uid}`;
     (d.loadedFonts||[]).forEach(f=>{if(f.type==='web'&&f.url){const l=document.createElement('link');l.rel='stylesheet';l.href=f.url;document.head.appendChild(l);}});
     document.title=(t.title||'템플릿')+' — Vkit 에디터';
     hideLoading();
-    loadSave();
-    requestAnimationFrame(()=>{initCanvas();buildUI();render();drawIllusOv();updateWeekNav();});
+    if(!TRIAL_MODE)loadSave();
+    requestAnimationFrame(()=>{initCanvas();buildUI();render();drawIllusOv();updateWeekNav();if(TRIAL_MODE)applyTrialMode();});
   }catch(e){showError('불러오기 실패','템플릿 데이터를 불러오지 못했어요.<br>'+e.message,'새로고침','javascript:location.reload()');}
 }
 
@@ -288,15 +292,12 @@ function initCanvas(){
   const maxW=areaW-32,maxH=areaH-32;
   const s=Math.min(1,maxW/canvasW,maxH/canvasH);
   const dW=Math.round(canvasW*s),dH=Math.round(canvasH*s);
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  canvas.width=Math.round(dW*dpr);canvas.height=Math.round(dH*dpr);
+  canvas.width=dW;canvas.height=dH;
   canvas.style.cssText='width:'+dW+'px;height:'+dH+'px;display:block';
-  ctx.scale(dpr,dpr);
-  ovCanvas.width=Math.round(dW*dpr);ovCanvas.height=Math.round(dH*dpr);
+  ovCanvas.width=dW;ovCanvas.height=dH;
   ovCanvas.style.cssText='position:absolute;top:0;left:0;width:'+dW+'px;height:'+dH+'px';
   document.getElementById('canvas-cont').style.cssText='position:relative;width:'+dW+'px;height:'+dH+'px';
   canvas.dataset.s=String(s);
-  canvas.dataset.dpr=String(dpr);
   render();drawIllusOv();
 }
 
@@ -324,12 +325,10 @@ function drawTxt(c2,l){
 }
 function render(){
   const s=parseFloat(canvas.dataset.s)||1;
-  const dpr=parseFloat(canvas.dataset.dpr)||1;
-  const cW=canvas.width/dpr,cH=canvas.height/dpr;
-  ctx.clearRect(0,0,cW,cH);
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,cW,cH);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
   if(illusData){const img=gImg(illusData);if(img&&img.complete&&img.naturalWidth){ctx.save();const iw=img.naturalWidth*illusScale,ih=img.naturalHeight*illusScale;const cx=(illusX+iw/2)*s,cy=(illusY+ih/2)*s;ctx.translate(cx,cy);ctx.rotate(illusRot*Math.PI/180);ctx.drawImage(img,-iw*s/2,-ih*s/2,iw*s,ih*s);ctx.restore();}}
-  if(bgData){const img=gImg(bgData);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,cW,cH);}
+  if(bgData){const img=gImg(bgData);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,canvas.width,canvas.height);}
   layers.forEach(l=>{
     if(l.visible===false)return;ctx.globalAlpha=l.opacity??1;
     if(l.type==='image'&&l.src){const img=gImg(l.src);if(!img||!img.complete||!img.naturalWidth){ctx.globalAlpha=1;return;}if(l.rotate){const cx=(l.x+l.w/2)*s,cy=(l.y+l.h/2)*s;ctx.save();ctx.translate(cx,cy);ctx.rotate(l.rotate*Math.PI/180);ctx.drawImage(img,-l.w*s/2,-l.h*s/2,l.w*s,l.h*s);ctx.restore();}else ctx.drawImage(img,l.x*s,l.y*s,l.w*s,l.h*s);}
@@ -339,8 +338,7 @@ function render(){
 }
 
 function drawIllusOv(){
-  const dpr=parseFloat(canvas.dataset.dpr)||1;
-  ovCtx.clearRect(0,0,ovCanvas.width/dpr,ovCanvas.height/dpr);
+  ovCtx.clearRect(0,0,ovCanvas.width,ovCanvas.height);
   if(!illusData)return;
   const img=gImg(illusData);if(!img||!img.complete||!img.naturalWidth)return;
   const s=parseFloat(canvas.dataset.s)||1;
@@ -569,7 +567,26 @@ function buildExport(){
   });
   return tmp;
 }
-function expPNG(){const a=document.createElement('a');a.href=buildExport().toDataURL('image/png');a.download='result.png';a.click();}
+function expPNG(){if(TRIAL_MODE){alert('체험 모드에서는 저장이 불가해요. 구매 후 이용해주세요!');return;}const a=document.createElement('a');a.href=buildExport().toDataURL('image/png');a.download='result.png';a.click();}
+
+function applyTrialMode(){
+  // PNG 저장 버튼 → 구매 유도로 변경
+  const pngBtn=document.querySelector('.tb.tb-primary');
+  if(pngBtn){pngBtn.innerHTML='🔒 구매 후 저장 가능';pngBtn.style.background='rgba(123,114,255,.2)';pngBtn.style.color='#7B72FF';pngBtn.style.boxShadow='none';pngBtn.onclick=()=>{location.href='/template-detail.html?id='+TEMPLATE_ID;};}
+  // 워터마크 추가
+  const wm=document.createElement('div');
+  wm.id='trial-watermark';
+  wm.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:20;overflow:hidden;border-radius:inherit';
+  let html='';
+  for(let r=0;r<8;r++){for(let c=0;c<5;c++){html+=`<div style="position:absolute;left:${c*22}%;top:${r*14}%;color:rgba(123,114,255,0.45);font-size:18px;font-weight:800;font-family:sans-serif;transform:rotate(-28deg);white-space:nowrap;letter-spacing:.1em;user-select:none;text-shadow:0 1px 3px rgba(0,0,0,.15)">VKIT 체험판</div>`;}}
+  wm.innerHTML=html;
+  document.getElementById('canvas-cont').appendChild(wm);
+  // 상단에 체험 배너
+  const banner=document.createElement('div');
+  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,rgba(123,114,255,.95),rgba(167,139,250,.95));color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:700;z-index:9999;display:flex;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(10px)';
+  banner.innerHTML=`⚠️ 체험 모드 — 편집 내용은 저장되지 않아요 <a href="/template-detail.html?id=${TEMPLATE_ID}" style="color:#fff;text-decoration:underline;font-weight:800">구매하러 가기 →</a>`;
+  document.body.appendChild(banner);
+}
 
 canvas.addEventListener('dblclick',e=>{
   const s=parseFloat(canvas.dataset.s)||1;
