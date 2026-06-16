@@ -231,6 +231,8 @@ async function initEditor(){
     const t=tdata[0];
     const d=JSON.parse(t.template_data);
     layers=d.layers||[];
+    // 방송 ON 기본값: offImage 레이어는 항상 숨김으로 시작
+    layers.forEach(l=>{if(l.isOffImage)l.visible=false;});
     groups=Object.assign({},d.groups||{});
     canvasW=d.canvasW||t.canvas_w||1920;
     canvasH=d.canvasH||t.canvas_h||1080;
@@ -605,7 +607,15 @@ canvas.addEventListener('dblclick',e=>{
         openGid=l.group;
         document.querySelectorAll('.day-block').forEach(el=>el.classList.remove('open'));
         document.getElementById('db-'+l.group)?.classList.add('open');
-        setTimeout(()=>{document.getElementById('db-'+l.group)?.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+        setTimeout(()=>{
+          const blk=document.getElementById('db-'+l.group);
+          if(blk){
+            // 사이드 패널 스크롤
+            const panel=document.getElementById('sidebar-inner');
+            if(panel){panel.scrollTo({top:blk.offsetTop-8,behavior:'smooth'});}
+            else{blk.scrollIntoView({behavior:'smooth',block:'nearest'});}
+          }
+        },80);
       }
       openEdit(l.id);return;
     }
