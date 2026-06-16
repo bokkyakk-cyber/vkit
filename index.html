@@ -837,7 +837,6 @@ footer{
 
   <div class="nav-center">
     <a href="#templates">템플릿</a>
-    <a href="#templates">에디터</a>
     <a href="#features">가이드</a>
     <a href="#purchase">구매안내</a>
   </div>
@@ -860,7 +859,6 @@ footer{
 <!-- 모바일 드로어 -->
 <div class="mobile-drawer" id="drawer">
   <a href="#templates">템플릿</a>
-  <a href="#templates">에디터</a>
   <a href="#features">가이드</a>
   <a href="#purchase">구매안내</a>
   <a href="#purchase" class="m-btn">마이 스튜디오 →</a>
@@ -1136,7 +1134,7 @@ function makeCard(t){
       <div class="template-thumb">
         ${thumb}
         ${typeBadge}
-        <div class="thumb-overlay"><button class="preview-btn">미리보기</button></div>
+        <div class="thumb-overlay"><button class="preview-btn" onclick="event.stopPropagation();location.href='template-detail.html?id=${t.id}'">미리보기</button></div>
       </div>
       <div class="template-info">
         <div class="template-cat">${cat.label}</div>
