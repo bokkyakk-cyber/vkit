@@ -1123,10 +1123,10 @@ function makeCard(t){
     ? `<div class="thumb-blur-bg" style="background-image:url('${t.thumbnail}')"></div><img src="${t.thumbnail}" alt="${t.title}">`
     : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
   return `
-    <div class="template-card fade-in" data-category="${t.category||'etc'}">
+    <div class="template-card fade-in" data-category="${t.category||'etc'}" onclick="location.href='template-detail.html?id=${t.id}'" style="cursor:pointer">
       <div class="template-thumb">
         ${thumb}
-        <div class="thumb-overlay"><button class="preview-btn">미리보기</button></div>
+        <div class="thumb-overlay"><button class="preview-btn">자세히 보기</button></div>
       </div>
       <div class="template-info">
         <div class="template-cat">${cat.label}</div>
@@ -1134,7 +1134,7 @@ function makeCard(t){
         <div class="template-desc">${t.description||''}</div>
         <div class="template-footer">
           <div class="template-price">${priceStr(t.price||0)}</div>
-          <button class="cart-btn" data-id="${t.id}" onclick="handleBuy('${t.id}','${t.title}',${t.price||0})">
+          <button class="cart-btn" data-id="${t.id}" onclick="event.stopPropagation();handleBuy('${t.id}','${t.title}',${t.price||0})">
             ${CART_SVG} 구매하기
           </button>
         </div>
