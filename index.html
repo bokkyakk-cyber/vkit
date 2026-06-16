@@ -1128,9 +1128,9 @@ function makeCard(t){
     : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
   const typeBadge = t.delivery_type === 'download'
     ? `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(30,30,40,0.75);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">📦 파일제공</div>`
-    : `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(124,90,240,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">✏️ 에디터</div>`;
+    : '';
   return `
-    <div class="template-card fade-in" data-category="${t.category||'etc'}">
+    <div class="template-card fade-in" data-category="${t.category||'etc'}" onclick="location.href='template-detail.html?id=${t.id}'">
       <div class="template-thumb">
         ${thumb}
         ${typeBadge}
@@ -1290,31 +1290,6 @@ async function initNav(){
     drawerEl.querySelector('.m-btn').href = 'mypage.html';
   } else {
     // 비로그인 상태 → 로그인 버튼
-    document.querySelector('.nav-right .nav-btn').outerHTML =
-      `<a href="login.html" class="nav-btn">로그인</a>`;
-    drawerEl.querySelector('.m-btn').textContent = '로그인 →';
-    drawerEl.querySelector('.m-btn').href = 'login.html';
-  }
-}
-
-// ── 네비 로그인 상태 반영 ──────────────────────────────
-async function initNav(){
-  const { createClient } = supabase;
-  const sb = createClient(SB_URL, SB_KEY);
-  const { data:{ user } } = await sb.auth.getUser();
-  const drawerEl = document.getElementById('drawer');
-
-  if(user){
-    document.querySelector('.nav-right .nav-btn').outerHTML =
-      `<a href="mypage.html" class="nav-btn">마이페이지</a>
-       <button class="nav-btn" id="logoutBtn" style="background:rgba(123,114,255,0.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,114,255,0.25)">로그아웃</button>`;
-    document.getElementById('logoutBtn').addEventListener('click', async()=>{
-      await sb.auth.signOut();
-      location.reload();
-    });
-    drawerEl.querySelector('.m-btn').textContent = '마이페이지 →';
-    drawerEl.querySelector('.m-btn').href = 'mypage.html';
-  } else {
     document.querySelector('.nav-right .nav-btn').outerHTML =
       `<a href="login.html" class="nav-btn">로그인</a>`;
     drawerEl.querySelector('.m-btn').textContent = '로그인 →';
