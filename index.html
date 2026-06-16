@@ -107,6 +107,7 @@ nav{
   transition:all 0.2s;
 }
 .nav-search:hover{background:rgba(255,255,255,0.9);border-color:var(--border)}
+.nav-search:focus-within{background:rgba(255,255,255,0.95);border-color:var(--violet);box-shadow:0 0 0 3px rgba(123,114,255,0.12)}
 .nav-search svg{opacity:0.5}
 .nav-btn{
   background:linear-gradient(135deg,var(--violet),#A78BFA);
@@ -1315,8 +1316,40 @@ async function initNav(){
 }
 
 // 페이지 로드 시 템플릿 불러오기 + 네비 초기화
+
+// ── 검색 ──────────────────────────────────────────────
+let allTemplates = [];
+let currentCategory = 'all';
+let searchQuery = '';
+
+function filterAndRender() {
+  const grid = document.getElementById('template-grid');
+  let filtered = allTemplates;
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(t => t.category === currentCategory);
+  }
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase();
+    filtered = filtered.filter(t =>
+      (t.title || '').toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q) ||
+      (Array.isArray(t.tags) ? t.tags : []).some(tag => tag.toLowerCase().includes(q))
+    );
+  }
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">검색 결과가 없어요 🥲</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(makeCard).join('');
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+}
+
 loadTemplates();
 initNav();
+
+// 검색 이벤트
+const _si = document.getElementById('search-input');
+if(_si){ _si.addEventListener('input', e=>{ searchQuery=e.target.value; filterAndRender(); }); }
 </script>
 </body>
 </html>
