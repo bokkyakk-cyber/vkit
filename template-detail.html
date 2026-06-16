@@ -271,6 +271,8 @@ async function handleBuy(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){location.href=`login.html?redirect=${encodeURIComponent(location.href)}`;return;}
   if(templateData.price===0){
+    const {data:existing}=await sb.from('purchases').select('id').eq('user_id',user.id).eq('template_id',TEMPLATE_ID).maybeSingle();
+    if(existing){showToast('이미 보유한 템플릿이에요!');setTimeout(()=>location.href='mypage.html',1500);return;}
     const {error}=await sb.from('purchases').insert({user_id:user.id,template_id:TEMPLATE_ID,amount:0,payment_key:'free',order_id:`free_${TEMPLATE_ID}_${Date.now()}`,status:'done'});
     if(!error){showToast('🎉 무료 템플릿이 추가됐어요!');setTimeout(()=>location.href='mypage.html',1500);}
     return;
