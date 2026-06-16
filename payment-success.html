@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>결제 완료 — Vkit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
@@ -147,7 +147,7 @@ body{
     <div id="success-view" style="display:none">
       <div class="status-icon success">🎉</div>
       <div class="title">결제가 완료됐어요!</div>
-      <div class="sub">마이페이지에서 구매한 템플릿을<br>바로 확인하고 에디터에서 꾸며보세요!</div>
+      <div class="sub">마이페이지에서 구매한 템플릿을<br>바로 확인할 수 있어요!</div>
       <div class="info-box" id="info-box"></div>
       <a href="mypage.html" class="btn">마이페이지에서 확인하기</a>
       <button class="btn-outline" onclick="location.href='index.html'">더 둘러보기</button>
@@ -177,9 +177,10 @@ function showFail(msg) {
   document.getElementById('fail-msg').textContent = msg;
 }
 
-function showSuccess(templateTitle, amount) {
+function showSuccess(templateTitle, amount, deliveryType, fileUrl) {
   document.getElementById('loading-view').style.display = 'none';
-  document.getElementById('success-view').style.display = 'block';
+  const sv = document.getElementById('success-view');
+  sv.style.display = 'block';
   document.getElementById('info-box').innerHTML = `
     <div class="info-row">
       <span class="info-label">템플릿</span>
@@ -194,6 +195,12 @@ function showSuccess(templateTitle, amount) {
       <span class="info-value">✅ 결제 완료</span>
     </div>
   `;
+
+  // 다운로드 타입이면 버튼 교체
+  if (deliveryType === 'download' && fileUrl) {
+    sv.querySelector('.btn').outerHTML =
+      `<a href="${fileUrl}" download class="btn">⬇ ZIP 파일 다운로드</a>`;
+  }
 
   // 5초 후 자동 이동
   let sec = 5;
@@ -228,18 +235,18 @@ async function init() {
 
   // 중복 저장 방지: 이미 처리된 orderId면 성공으로 처리
   const { data: existing } = await sb.from('purchases')
-    .select('id, templates(title)')
+    .select('id, templates(title, delivery_type, file_url)')
     .eq('order_id', orderId)
     .single();
 
   if (existing) {
-    showSuccess(existing.templates?.title || '템플릿', amount);
+    showSuccess(existing.templates?.title || '템플릿', amount, existing.templates?.delivery_type, existing.templates?.file_url);
     return;
   }
 
   // 템플릿 정보 가져오기
   const { data: template } = await sb.from('templates')
-    .select('title')
+    .select('title, delivery_type, file_url')
     .eq('id', templateId)
     .single();
 
@@ -259,7 +266,7 @@ async function init() {
     return;
   }
 
-  showSuccess(template?.title || '템플릿', amount);
+  showSuccess(template?.title || '템플릿', amount, template?.delivery_type, template?.file_url);
 }
 
 init();

@@ -958,14 +958,16 @@ footer{
 
   <!-- 카테고리 아이콘+텍스트 -->
   <div class="category-row fade-in">
-    <div class="cat-tab active"><span class="cat-icon">⊞</span> 전체</div>
-    <div class="cat-tab"><span class="cat-icon">🖼️</span> 오버레이</div>
-    <div class="cat-tab"><span class="cat-icon">💬</span> 채팅창</div>
-    <div class="cat-tab"><span class="cat-icon">📅</span> 스케줄</div>
-    <div class="cat-tab"><span class="cat-icon">🏷️</span> 스티커</div>
-    <div class="cat-tab"><span class="cat-icon">🖥️</span> 배경화면</div>
-    <div class="cat-tab"><span class="cat-icon">✨</span> 인트로/엔딩</div>
-    <div class="cat-tab"><span class="cat-icon">···</span> 기타</div>
+    <div class="cat-tab active"><span class="cat-icon">📅</span> 스케줄표</div>
+    <div class="cat-tab"><span class="cat-icon">🖥️</span> 방송화면</div>
+    <div class="cat-tab"><span class="cat-icon">🖼️</span> 포스터</div>
+    <div class="cat-tab"><span class="cat-icon">🎬</span> 다시보기</div>
+    <div class="cat-tab"><span class="cat-icon">📱</span> 쇼츠</div>
+    <div class="cat-tab"><span class="cat-icon">🍽️</span> 메뉴판</div>
+    <div class="cat-tab"><span class="cat-icon">📊</span> 메인소개표</div>
+    <div class="cat-tab"><span class="cat-icon">🖼️</span> 썸네일</div>
+    <div class="cat-tab"><span class="cat-icon">📑</span> PPT</div>
+    <div class="cat-tab"><span class="cat-icon">📋</span> 치지직패널</div>
   </div>
 
   <div class="template-grid" id="template-grid">
@@ -1107,13 +1109,16 @@ const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const CART_SVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1h1.5l1.5 6h5l1-4H4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5.5" cy="10" r="0.8" fill="currentColor"/><circle cx="9" cy="10" r="0.8" fill="currentColor"/></svg>`;
 
 const CAT_MAP = {
-  schedule:     { label:'스케줄',   icon:'📅' },
-  announcement: { label:'공지',     icon:'📢' },
-  promotion:    { label:'홍보',     icon:'🎯' },
-  overlay:      { label:'오버레이', icon:'🖼️' },
-  chat:         { label:'채팅창',   icon:'💬' },
-  sticker:      { label:'스티커',   icon:'🏷️' },
-  etc:          { label:'기타',     icon:'✨' },
+  schedule:  { label:'스케줄표',   icon:'📅' },
+  broadcast: { label:'방송화면',   icon:'🖥️' },
+  poster:    { label:'포스터',     icon:'🖼️' },
+  vod:       { label:'다시보기',   icon:'🎬' },
+  shorts:    { label:'쇼츠',       icon:'📱' },
+  menu:      { label:'메뉴판',     icon:'🍽️' },
+  profile:   { label:'메인소개표', icon:'📊' },
+  thumbnail: { label:'썸네일',     icon:'🖼️' },
+  ppt:       { label:'PPT',        icon:'📑' },
+  panel:     { label:'치지직패널', icon:'📋' },
 };
 
 function priceStr(p){ return p === 0 ? '무료' : p.toLocaleString()+'<span>원</span>'; }
@@ -1123,10 +1128,14 @@ function makeCard(t){
   const thumb = t.thumbnail
     ? `<div class="thumb-blur-bg" style="background-image:url('${t.thumbnail}')"></div><img src="${t.thumbnail}" alt="${t.title}">`
     : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
+  const typeBadge = t.delivery_type === 'download'
+    ? `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(30,30,40,0.75);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">📦 파일제공</div>`
+    : `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(124,90,240,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">✏️ 에디터</div>`;
   return `
     <div class="template-card fade-in" data-category="${t.category||'etc'}">
       <div class="template-thumb">
         ${thumb}
+        ${typeBadge}
         <div class="thumb-overlay"><button class="preview-btn">미리보기</button></div>
       </div>
       <div class="template-info">
@@ -1147,7 +1156,7 @@ async function loadTemplates(category='all'){
   const grid = document.getElementById('template-grid');
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">불러오는 중...</div>';
   try {
-    let url = `${SB_URL}/rest/v1/templates?select=id,title,description,category,price,thumbnail,tags,created_at&order=created_at.desc`;
+    let url = `${SB_URL}/rest/v1/templates?select=id,title,description,category,price,thumbnail,tags,delivery_type,created_at&order=created_at.desc`;
     if(category !== 'all') url += `&category=eq.${category}`;
     const res = await fetch(url, {
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
@@ -1230,7 +1239,7 @@ async function handleBuy(id, title, price) {
 }
 
 // 카테고리 탭 → 필터링 연결
-const CAT_TAB_MAP = ['all','overlay','chat','schedule','sticker','background','intro','etc'];
+const CAT_TAB_MAP = ['schedule','broadcast','poster','vod','shorts','menu','profile','thumbnail','ppt','panel'];
 
 // ── 페이드인 ──────────────────────────────────────────
 const obs = new IntersectionObserver((entries)=>{
@@ -1245,7 +1254,7 @@ document.querySelectorAll('.cat-tab').forEach((tab, idx)=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
-    currentCategory = CAT_TAB_MAP[idx] || 'all';
+    currentCategory = CAT_TAB_MAP[idx] || 'schedule';
     filterAndRender();
   });
 });
@@ -1319,7 +1328,7 @@ async function initNav(){
 
 // ── 검색 ──────────────────────────────────────────────
 let allTemplates = [];
-let currentCategory = 'all';
+let currentCategory = 'schedule';
 let searchQuery = '';
 
 function filterAndRender() {
