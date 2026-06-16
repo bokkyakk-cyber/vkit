@@ -1192,7 +1192,7 @@ async function handleBuy(id, title, price) {
     .select('id')
     .eq('user_id', user.id)
     .eq('template_id', id)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     alert('이미 구매한 템플릿이에요! 마이페이지에서 확인해보세요 😊');
