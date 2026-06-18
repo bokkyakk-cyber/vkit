@@ -488,7 +488,7 @@ let loadedFonts=[],localFontData={};
 let canvasW=1080,canvasH=1080,scale=1;
 let currentTab='props',collapsedGroups={};
 let bgImage=null;
-let adminIllusData=null,adminIllusX=0,adminIllusY=0,adminIllusScale=1,adminIllusRot=0;
+let adminIllusData=null,adminIllusX=0,adminIllusY=0,adminIllusScale=1,adminIllusRot=0,adminIllusDrag=null;
 let dragState=null,selBoxState=null,dragLayerId=null,editingLayerId=null;
 const bgCanvas=document.getElementById('bg-canvas');
 const edCanvas=document.getElementById('editor-canvas');
@@ -577,7 +577,29 @@ function renderFontList(){const el=document.getElementById('fm-font-list');if(!l
 function getAllFontNames(){return['Geist','Arial','Georgia','Impact','Courier New','Verdana',...loadedFonts.map(f=>f.name)];}
 const imgCache={};
 function getImg(src){if(!src)return null;if(imgCache[src])return imgCache[src];const img=new Image();img.crossOrigin='anonymous';img.onload=()=>renderAll();img.src=src;imgCache[src]=img;return img;}
-function renderAll(){bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);bgCtx.save();bgCtx.scale(scale,scale);bgCtx.fillStyle='#ffffff';bgCtx.fillRect(0,0,canvasW,canvasH);if(bgImage){const img=getImg(bgImage);if(img&&img.complete&&img.naturalWidth)bgCtx.drawImage(img,0,0,canvasW,canvasH);}for(let i=0;i<layers.length;i++){const l=layers[i];if(l.visible===false)continue;bgCtx.globalAlpha=l.opacity??1;if(l.type==='image'&&l.src)drawImage(bgCtx,l);else if(l.type==='text')drawTextRaw(bgCtx,l);bgCtx.globalAlpha=1;}bgCtx.restore();edCtx.clearRect(0,0,edCanvas.width,edCanvas.height);edCtx.save();edCtx.scale(scale,scale);drawSelectionHandles(edCtx);if(selBoxState)drawSelectionBox(edCtx);edCtx.restore();}
+function renderAll(){bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);bgCtx.save();bgCtx.scale(scale,scale);bgCtx.fillStyle='#ffffff';bgCtx.fillRect(0,0,canvasW,canvasH);
+if(adminIllusData){const img=getImg(adminIllusData);if(img&&img.complete&&img.naturalWidth){bgCtx.save();const iw=img.naturalWidth*adminIllusScale,ih=img.naturalHeight*adminIllusScale;const cx=adminIllusX+iw/2,cy=adminIllusY+ih/2;bgCtx.translate(cx,cy);bgCtx.rotate(adminIllusRot*Math.PI/180);bgCtx.drawImage(img,-iw/2,-ih/2,iw,ih);bgCtx.restore();}}
+if(bgImage){const img=getImg(bgImage);if(img&&img.complete&&img.naturalWidth)bgCtx.drawImage(img,0,0,canvasW,canvasH);}for(let i=0;i<layers.length;i++){const l=layers[i];if(l.visible===false)continue;bgCtx.globalAlpha=l.opacity??1;if(l.type==='image'&&l.src)drawImage(bgCtx,l);else if(l.type==='text')drawTextRaw(bgCtx,l);bgCtx.globalAlpha=1;}bgCtx.restore();edCtx.clearRect(0,0,edCanvas.width,edCanvas.height);edCtx.save();edCtx.scale(scale,scale);drawSelectionHandles(edCtx);if(selBoxState)drawSelectionBox(edCtx);edCtx.restore();drawAdminIllusOv();}
+function drawAdminIllusOv(){
+  edCtx.save();edCtx.scale(scale,scale);
+  if(!adminIllusData){edCtx.restore();return;}
+  const img=getImg(adminIllusData);if(!img||!img.complete||!img.naturalWidth){edCtx.restore();return;}
+  const iw=img.naturalWidth*adminIllusScale,ih=img.naturalHeight*adminIllusScale;
+  const cx=adminIllusX+iw/2,cy=adminIllusY+ih/2;
+  const rot=adminIllusRot*Math.PI/180;
+  edCtx.save();edCtx.translate(cx,cy);edCtx.rotate(rot);
+  edCtx.strokeStyle='rgba(124,90,240,.8)';edCtx.lineWidth=2/scale;edCtx.setLineDash([6/scale,4/scale]);
+  edCtx.strokeRect(-iw/2,-ih/2,iw,ih);edCtx.setLineDash([]);
+  [[-iw/2,-ih/2],[iw/2,-ih/2],[iw/2,ih/2],[-iw/2,ih/2]].forEach(([hx,hy])=>{
+    edCtx.fillStyle='#fff';edCtx.strokeStyle='#7c5af0';edCtx.lineWidth=2/scale;
+    edCtx.beginPath();edCtx.arc(hx,hy,6/scale,0,Math.PI*2);edCtx.fill();edCtx.stroke();
+  });
+  edCtx.beginPath();edCtx.moveTo(0,-ih/2);edCtx.lineTo(0,-ih/2-22/scale);edCtx.strokeStyle='rgba(124,90,240,.5)';edCtx.lineWidth=1.5/scale;edCtx.stroke();
+  edCtx.fillStyle='#fff';edCtx.strokeStyle='#7c5af0';edCtx.lineWidth=2/scale;
+  edCtx.beginPath();edCtx.arc(0,-ih/2-22/scale,7/scale,0,Math.PI*2);edCtx.fill();edCtx.stroke();
+  edCtx.fillStyle='#7c5af0';edCtx.font=`bold ${11/scale}px sans-serif`;edCtx.textAlign='center';edCtx.textBaseline='middle';edCtx.fillText('↻',0,-ih/2-22/scale);
+  edCtx.restore();edCtx.restore();
+}
 function drawImage(ctx,l){const img=getImg(l.src);if(!img||!img.complete||!img.naturalWidth)return;
 if(l.rotate){const cx=l.x+l.w/2,cy=l.y+l.h/2;ctx.save();ctx.translate(cx,cy);ctx.rotate(l.rotate*Math.PI/180);ctx.drawImage(img,-l.w/2,-l.h/2,l.w,l.h);ctx.restore();}
 else ctx.drawImage(img,l.x,l.y,l.w,l.h);}
@@ -632,8 +654,17 @@ function onDown(e){
   selectedIds=[];selBoxState={x,y,w:0,h:0};
   refresh();
 }
-function onMove(e){const{x,y}=canvasCoords(e);if(selBoxState){selBoxState.w=x-selBoxState.x;selBoxState.h=y-selBoxState.y;const nx=Math.min(selBoxState.x,x),ny=Math.min(selBoxState.y,y),nw=Math.abs(selBoxState.w),nh=Math.abs(selBoxState.h);selectedIds=layers.filter(l=>l.visible!==false&&l.x<nx+nw&&l.x+l.w>nx&&l.y<ny+nh&&l.y+l.h>ny).map(l=>l.id);renderAll();return;}if(!dragState)return;const dx=x-dragState.startX,dy=y-dragState.startY;if(dragState.mode==='move'){dragState.origLayers.forEach(orig=>{const l=layerById(orig.id);if(!l)return;l.x=Math.round(orig.x+dx);l.y=Math.round(orig.y+dy);});}else if(dragState.mode==='resize'){const{origBB,handle,origLayers}=dragState;let nBB={...origBB};if(handle.includes('e'))nBB.w=Math.max(10,origBB.w+dx);if(handle.includes('s'))nBB.h=Math.max(10,origBB.h+dy);if(handle.includes('w')){nBB.x=origBB.x+dx;nBB.w=Math.max(10,origBB.w-dx);}if(handle.includes('n')){nBB.y=origBB.y+dy;nBB.h=Math.max(10,origBB.h-dy);}const sx=nBB.w/origBB.w,sy=nBB.h/origBB.h;origLayers.forEach(orig=>{const l=layerById(orig.id);if(!l)return;l.x=Math.round(nBB.x+(orig.x-origBB.x)*sx);l.y=Math.round(nBB.y+(orig.y-origBB.y)*sy);l.w=Math.max(10,Math.round(orig.w*sx));l.h=Math.max(10,Math.round(orig.h*sy));});}renderAll();if(currentTab==='props')renderProps();}
-function onUp(e){if(selBoxState){selBoxState=null;refresh();return;}if(dragState){dragState=null;renderLayers();renderProps();}}
+function onMove(e){const{x,y}=canvasCoords(e);
+if(adminIllusDrag){
+  if(adminIllusDrag.mode==='move'){adminIllusX=adminIllusDrag.ix+(x-adminIllusDrag.sx);adminIllusY=adminIllusDrag.iy+(y-adminIllusDrag.sy);}
+  else if(adminIllusDrag.mode==='rotate'){const a=Math.atan2(y-adminIllusDrag.cy,x-adminIllusDrag.cx)-Math.atan2(adminIllusDrag.sy-adminIllusDrag.cy,adminIllusDrag.sx-adminIllusDrag.cx);adminIllusRot=adminIllusDrag.rot+a*180/Math.PI;}
+  else if(adminIllusDrag.mode==='scale'){const dist=Math.hypot(x-adminIllusDrag.cx,y-adminIllusDrag.cy);const orig=Math.hypot(adminIllusDrag.hw,adminIllusDrag.hh);adminIllusScale=Math.max(0.01,adminIllusDrag.scale*(dist/orig));}
+  renderAll();drawAdminIllusOv();return;
+}
+if(selBoxState){selBoxState.w=x-selBoxState.x;selBoxState.h=y-selBoxState.y;const nx=Math.min(selBoxState.x,x),ny=Math.min(selBoxState.y,y),nw=Math.abs(selBoxState.w),nh=Math.abs(selBoxState.h);selectedIds=layers.filter(l=>l.visible!==false&&l.x<nx+nw&&l.x+l.w>nx&&l.y<ny+nh&&l.y+l.h>ny).map(l=>l.id);renderAll();return;}if(!dragState)return;const dx=x-dragState.startX,dy=y-dragState.startY;if(dragState.mode==='move'){dragState.origLayers.forEach(orig=>{const l=layerById(orig.id);if(!l)return;l.x=Math.round(orig.x+dx);l.y=Math.round(orig.y+dy);});}else if(dragState.mode==='resize'){const{origBB,handle,origLayers}=dragState;let nBB={...origBB};if(handle.includes('e'))nBB.w=Math.max(10,origBB.w+dx);if(handle.includes('s'))nBB.h=Math.max(10,origBB.h+dy);if(handle.includes('w')){nBB.x=origBB.x+dx;nBB.w=Math.max(10,origBB.w-dx);}if(handle.includes('n')){nBB.y=origBB.y+dy;nBB.h=Math.max(10,origBB.h-dy);}const sx=nBB.w/origBB.w,sy=nBB.h/origBB.h;origLayers.forEach(orig=>{const l=layerById(orig.id);if(!l)return;l.x=Math.round(nBB.x+(orig.x-origBB.x)*sx);l.y=Math.round(nBB.y+(orig.y-origBB.y)*sy);l.w=Math.max(10,Math.round(orig.w*sx));l.h=Math.max(10,Math.round(orig.h*sy));});}renderAll();if(currentTab==='props')renderProps();}
+function onUp(e){
+if(adminIllusDrag){adminIllusDrag=null;renderCanvasPanel();return;}
+if(selBoxState){selBoxState=null;refresh();return;}if(dragState){dragState=null;renderLayers();renderProps();}}
 function getTouchCoord(e){return{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY};}
 function onTouchStart(e){e.preventDefault();onDown(getTouchCoord(e));}
 function onTouchMove(e){e.preventDefault();onMove(getTouchCoord(e));}
@@ -718,7 +749,8 @@ function drawTextRaw(ctx,l){
 function exportFlatCanvas(mimeType,quality=0.95){
   const tmp=document.createElement('canvas');tmp.width=canvasW;tmp.height=canvasH;
   const ctx=tmp.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvasW,canvasH);
-  if(bgImage){const img=getImg(bgImage);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,canvasW,canvasH);}
+  if(adminIllusData){const img=getImg(adminIllusData);if(img&&img.complete&&img.naturalWidth){ctx.save();const iw=img.naturalWidth*adminIllusScale,ih=img.naturalHeight*adminIllusScale;const cx=adminIllusX+iw/2,cy=adminIllusY+ih/2;ctx.translate(cx,cy);ctx.rotate(adminIllusRot*Math.PI/180);ctx.drawImage(img,-iw/2,-ih/2,iw,ih);ctx.restore();}}
+if(bgImage){const img=getImg(bgImage);if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,canvasW,canvasH);}
   layers.forEach(l=>{
     if(l.visible===false)return;ctx.globalAlpha=l.opacity??1;
     if(l.type==='image'&&l.src)drawImage(ctx,l);

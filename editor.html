@@ -50,8 +50,7 @@ body{background:var(--bg);background-image:radial-gradient(ellipse at 5% 0%,rgba
 #canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;min-height:0}
 #canvas-cont{position:relative;border-radius:var(--r-md);overflow:hidden;box-shadow:var(--gs-lg);border:2px solid var(--gb);flex-shrink:0}
 #tmpl-canvas{display:block}
-#illus-ov{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
-#illus-ov.active{pointer-events:all;touch-action:none}
+#illus-ov{position:absolute;top:0;left:0;pointer-events:all;touch-action:none;z-index:5;cursor:default}
 #sidebar{width:310px;min-width:310px;display:flex;flex-direction:column;overflow:hidden;background:rgba(255,255,255,.42);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1.5px solid var(--gb)}
 #sidebar-inner{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
 #sidebar-inner::-webkit-scrollbar{width:3px}
@@ -78,7 +77,7 @@ body{background:var(--bg);background-image:radial-gradient(ellipse at 5% 0%,rgba
 .crange{flex:1;accent-color:var(--accent);cursor:pointer}
 .cval{font-size:10px;color:var(--text-3);width:34px;text-align:right;font-weight:600;flex-shrink:0}
 .ihint{font-size:10px;color:var(--text-2);line-height:1.6;background:rgba(124,90,240,.06);padding:6px 10px;border-radius:var(--r-xs);border:1px solid rgba(124,90,240,.11)}
-.day-block{border-radius:var(--r-md);overflow:hidden;box-shadow:var(--gs-sm)}
+.day-block{border-radius:var(--r-md);overflow:visible;box-shadow:var(--gs-sm)}
 .day-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;border:none;background:var(--ag);color:#fff;font-size:13px;font-weight:700;font-family:var(--font);transition:all .16s;}
 .day-btn.sat{background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
 .day-btn.sun{background:linear-gradient(135deg,#e84040,#f87171)}
@@ -367,6 +366,7 @@ function drawIllusOv(){
 function getEvtPt(e){const r=ovCanvas.getBoundingClientRect();const src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
 function illusDown(e){
   if(!illusData)return;e.preventDefault();
+  ovCanvas.style.cursor='grabbing';
   const{x,y}=getEvtPt(e);const img=gImg(illusData);if(!img)return;
   const s=parseFloat(canvas.dataset.s)||1;
   const iw=img.naturalWidth*illusScale*s,ih=img.naturalHeight*illusScale*s;
@@ -387,7 +387,7 @@ function illusMove(e){
   else if(illusDragMode==='scale'){const dist=Math.hypot(x-illusDragStart.cx,y-illusDragStart.cy);const orig=Math.hypot(illusDragStart.hw,illusDragStart.hh);illusScale=Math.max(.02,illusDragStart.scale*(dist/orig));}
   render();drawIllusOv();updSliders();
 }
-function illusUp(){if(illusDragMode){illusDragMode=null;snapC();}}
+function illusUp(){if(illusDragMode){illusDragMode=null;snapC();}ovCanvas.style.cursor=illusData?'grab':'default';}
 ovCanvas.addEventListener('mousedown',illusDown);ovCanvas.addEventListener('mousemove',illusMove);ovCanvas.addEventListener('mouseup',illusUp);ovCanvas.addEventListener('mouseleave',illusUp);
 ovCanvas.addEventListener('touchstart',illusDown,{passive:false});ovCanvas.addEventListener('touchmove',illusMove,{passive:false});ovCanvas.addEventListener('touchend',illusUp);
 function updSliders(){
@@ -465,7 +465,10 @@ function buildUI(){
 function toggleDay(gid){
   openGid=openGid===gid?null:gid;
   document.querySelectorAll('.day-block').forEach(el=>el.classList.remove('open'));
-  if(openGid){document.getElementById('db-'+openGid)?.classList.add('open');}
+  if(openGid){
+    const el=document.getElementById('db-'+openGid);
+    if(el){el.classList.add('open');setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+  }
 }
 
 function mkIllusCard(){
@@ -480,11 +483,7 @@ function mkIllusCard(){
         '<button class="ibtn ibtn-p" onclick="document.getElementById(\'illus-file\').click()">↺ 교체</button>'+
         '<button class="ibtn ibtn-d" onclick="clearIllus()">✕ 제거</button>'+
       '</div>'+
-      '<div class="ictrl">'+
-        '<div class="crow"><span class="clbl">크기</span><input class="crange" type="range" id="sl-sc" min="5" max="300" value="'+Math.round(illusScale*100)+'" oninput="illusScaleSlider(this.value)"><span class="cval" id="vl-sc">'+Math.round(illusScale*100)+'%</span></div>'+
-        '<div class="crow"><span class="clbl">회전</span><input class="crange" type="range" id="sl-rt" min="-180" max="180" value="'+Math.round(illusRot)+'" oninput="illusRotSlider(this.value)"><span class="cval" id="vl-rt">'+Math.round(illusRot)+'°</span></div>'+
-      '</div>'+
-      '<div class="ihint">드래그=이동 · 모서리=크기 · ↺=회전<br>방향키=이동 · Alt+방향키=회전/크기 · Shift=10배속</div>'+'<div class="ihint" style="margin-top:4px;color:var(--accent);border-color:rgba(124,90,240,.22)">💡 이미지를 직접 올려주세요<br>판매자 샘플 이미지는 에디터에서 표시되지 않아요</div>'
+      '<div class="ihint">캔버스에서 직접 조작하세요<br>드래그=이동 · 모서리=크기조절 · ↻=회전<br>방향키=이동 · Alt+↑↓=크기 · Alt+←→=회전</div>'
     :
       '<button onclick="document.getElementById(\'illus-file\').click()" ondrop="onIllusDrop(event)" ondragover="onIllusDragOver(event)" style="width:100%;padding:10px 14px;background:rgba(124,90,240,.07);border:1.5px dashed rgba(124,90,240,.28);border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background=\'rgba(124,90,240,.13)\'" onmouseout="this.style.background=\'rgba(124,90,240,.07)\'">'+
         '+ 이미지 업로드 '+
@@ -545,12 +544,12 @@ function upF(id,v){
   document.querySelectorAll('[data-id="'+id+'"]').forEach(el=>{if(el!==document.activeElement&&el.value!==v)el.value=v;});
 }
 
-function applyIllusFile(f){if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{snapC();illusData=ev.target.result;illusX=0;illusY=0;illusScale=1;illusRot=0;render();drawIllusOv();buildUI();};r.readAsDataURL(f);}
+function applyIllusFile(f){if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{snapC();illusData=ev.target.result;illusX=0;illusY=0;illusScale=1;illusRot=0;ovCanvas.style.cursor='grab';render();drawIllusOv();buildUI();};r.readAsDataURL(f);}
 function onIllusLoad(e){applyIllusFile(e.target.files[0]);e.target.value='';}
 function onIllusDrop(e){e.preventDefault();onIllusDragLeave();applyIllusFile(e.dataTransfer.files[0]);}
 function onIllusDragOver(e){e.preventDefault();document.getElementById('illus-drop')?.classList.add('dragover');}
 function onIllusDragLeave(){document.getElementById('illus-drop')?.classList.remove('dragover');}
-function clearIllus(){snapC();illusData=null;render();drawIllusOv();buildUI();}
+function clearIllus(){snapC();illusData=null;ovCanvas.style.cursor='default';render();drawIllusOv();buildUI();}
 
 function snapC(){
   undoStack.push(JSON.stringify({layers:JSON.parse(JSON.stringify(layers)),il:illusData,ix:illusX,iy:illusY,isc:illusScale,ir:illusRot}));
@@ -567,7 +566,7 @@ function loadSave(){
   try{
     const d=JSON.parse(localStorage.getItem(SK)||'null');if(!d)return;
     if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;}});
-    if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;}
+    if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;ovCanvas.style.cursor='grab';}
   }catch(e){}
 }
 function resetC(){if(!confirm('판매자 기본값으로 초기화합니다.\n입력 내용이 모두 사라집니다.'))return;localStorage.removeItem(SK);location.reload();}
