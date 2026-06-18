@@ -340,6 +340,31 @@ select.prop-ctrl option{background:#fff;color:var(--text-1)}
   </div>
 </div>
 <!-- Supabase Upload Modal -->
+<!-- Admin Login Modal -->
+<div class="modal-backdrop hidden" id="admin-login-modal">
+  <div class="modal" style="width:360px">
+    <div class="modal-title"><i class="ti ti-lock" style="color:var(--accent)"></i> 어드민 로그인</div>
+    <div class="modal-body">
+      <p class="modal-info">업로드하려면 어드민 계정으로 로그인하세요.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <div>
+          <div class="fm-label">이메일</div>
+          <input class="fm-input" id="admin-email" type="email" placeholder="이메일 입력">
+        </div>
+        <div>
+          <div class="fm-label">비밀번호</div>
+          <input class="fm-input" id="admin-password" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        </div>
+        <div id="admin-login-status" style="display:none"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="toggleModal('admin-login-modal',false)">취소</button>
+      <button class="modal-btn primary" onclick="doAdminLogin()"><i class="ti ti-login"></i> 로그인</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop hidden" id="upload-modal">
   <div class="modal" style="width:480px">
     <div class="modal-title"><i class="ti ti-cloud-upload" style="color:#22a06b"></i> Supabase 템플릿 업로드</div>
@@ -463,6 +488,7 @@ let loadedFonts=[],localFontData={};
 let canvasW=1080,canvasH=1080,scale=1;
 let currentTab='props',collapsedGroups={};
 let bgImage=null;
+let adminIllusData=null,adminIllusX=0,adminIllusY=0,adminIllusScale=1,adminIllusRot=0;
 let dragState=null,selBoxState=null,dragLayerId=null,editingLayerId=null;
 const bgCanvas=document.getElementById('bg-canvas');
 const edCanvas=document.getElementById('editor-canvas');
@@ -473,7 +499,7 @@ function refresh(){renderAll();renderLayers();renderProps();updateStatus()}
 function layerById(id){return layers.find(l=>l.id===id)}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function getWeekDates(){const now=new Date(),day=now.getDay();const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));return DAYS.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return(d.getMonth()+1)+'/'+(d.getDate());});}
-function init(){loadAutoSave();resizeCanvas();renderAll();renderLayers();renderProps();renderCanvasPanel();updateStatus();setupAutoSave();}
+async function init(){loadAutoSave();resizeCanvas();renderAll();renderLayers();renderProps();renderCanvasPanel();updateStatus();setupAutoSave();await tryRestoreSession();}
 function setupAutoSave(){setInterval(()=>{try{localStorage.setItem(SAVE_KEY,JSON.stringify({layers,groups,canvasW,canvasH}));}catch(e){}},4000);}
 function loadAutoSave(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!d)return;if(d.layers)layers=d.layers;if(d.groups)groups=d.groups;if(d.canvasW){canvasW=d.canvasW;document.getElementById('cw').value=canvasW;}if(d.canvasH){canvasH=d.canvasH;document.getElementById('ch').value=canvasH;}}catch(e){}}
 function resizeCanvas(){canvasW=parseInt(document.getElementById('cw').value)||1080;canvasH=parseInt(document.getElementById('ch').value)||1080;const wrap=document.getElementById('canvas-wrap');const maxW=wrap.clientWidth-64,maxH=wrap.clientHeight-64;scale=Math.min(1,maxW/canvasW,maxH/canvasH);const dW=Math.round(canvasW*scale),dH=Math.round(canvasH*scale);[bgCanvas,edCanvas].forEach(c=>{c.width=dW;c.height=dH;c.style.width=dW+'px';c.style.height=dH+'px';});document.getElementById('canvas-container').style.cssText=`width:${dW}px;height:${dH}px`;document.getElementById('st-size').textContent=canvasW+'×'+canvasH;renderAll();}
@@ -651,9 +677,15 @@ function setCanvasPreset(w,h){document.getElementById('cw').value=w;document.get
 function updateStatus(){document.getElementById('st-layers').textContent='레이어 '+layers.length;document.getElementById('st-client').textContent='의뢰자 '+layers.filter(l=>l.clientEditable).length;const m=document.getElementById('status-multi');if(selectedIds.length>1){m.style.display='';m.textContent=selectedIds.length+'개 선택됨';}else m.style.display='none';}
 let msgTimer;
 function showMsg(text){const el=document.getElementById('status-msg');el.textContent=text;el.style.opacity='1';clearTimeout(msgTimer);msgTimer=setTimeout(()=>{el.style.opacity='0';},2500);}
-function saveJSON(){const data={layers,groups,canvasW,canvasH,bgImage,loadedFonts:loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type})),localFontData};downloadURL(URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),'template.json');showMsg('JSON 저장 완료');}
+function uploadAdminIllus(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{adminIllusData=ev.target.result;adminIllusX=0;adminIllusY=0;adminIllusScale=1;adminIllusRot=0;renderCanvasPanel();renderAll();showMsg('샘플 이미지 설정됨');};r.readAsDataURL(f);};
+  inp.click();
+}
+function clearAdminIllus(){adminIllusData=null;renderCanvasPanel();renderAll();showMsg('샘플 이미지 제거됨');}
+function saveJSON(){const data={layers,groups,canvasW,canvasH,bgImage,defaultIllus:adminIllusData,defaultIllusX:adminIllusX,defaultIllusY:adminIllusY,defaultIllusScale:adminIllusScale,defaultIllusRot:adminIllusRot,loadedFonts:loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type})),localFontData};downloadURL(URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),'template.json');showMsg('JSON 저장 완료');}
 function loadJSONTrigger(){document.getElementById('json-file').click();}
-function loadJSONFromFile(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);layers=d.layers||[];groups=d.groups||{};canvasW=d.canvasW||1080;canvasH=d.canvasH||1080;bgImage=d.bgImage||null;localFontData=d.localFontData||{};document.getElementById('cw').value=canvasW;document.getElementById('ch').value=canvasH;(d.loadedFonts||[]).forEach(f=>{if(loadedFonts.find(lf=>lf.name===f.name))return;injectFontDOM(f);loadedFonts.push(f);});selectedIds=[];undoStack=[];redoStack=[];resizeCanvas();renderAll();renderLayers();renderProps();renderCanvasPanel();updateStatus();showMsg('불러오기 완료');}catch(err){alert('파싱 오류: '+err.message);}};reader.readAsText(file);e.target.value='';}
+function loadJSONFromFile(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);layers=d.layers||[];groups=d.groups||{};canvasW=d.canvasW||1080;canvasH=d.canvasH||1080;bgImage=d.bgImage||null;adminIllusData=d.defaultIllus||null;adminIllusX=d.defaultIllusX||0;adminIllusY=d.defaultIllusY||0;adminIllusScale=d.defaultIllusScale||1;adminIllusRot=d.defaultIllusRot||0;localFontData=d.localFontData||{};document.getElementById('cw').value=canvasW;document.getElementById('ch').value=canvasH;(d.loadedFonts||[]).forEach(f=>{if(loadedFonts.find(lf=>lf.name===f.name))return;injectFontDOM(f);loadedFonts.push(f);});selectedIds=[];undoStack=[];redoStack=[];resizeCanvas();renderAll();renderLayers();renderProps();renderCanvasPanel();updateStatus();showMsg('불러오기 완료');}catch(err){alert('파싱 오류: '+err.message);}};reader.readAsText(file);e.target.value='';}
 function calcFitRaw(ctx,l){
   if(!l.autoFit)return l.fontSize;
   const mxF=Math.min(l.maxFontSize||l.fontSize,l.fontSize),mnF=l.minFontSize||8,lh=l.lineHeight||1.3,lns=(l.text||'').split('\n');
@@ -766,7 +798,81 @@ window.addEventListener('resize',()=>resizeCanvas());
 const SUPABASE_URL = 'https://fvuyimvkozbcnzudxsdp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
 
-function openUploadModal(){
+// 어드민 로그인 토큰
+let adminAccessToken = null;
+const ADMIN_TOKEN_KEY = 'vkit_admin_token';
+const ADMIN_REFRESH_KEY = 'vkit_admin_refresh';
+const ADMIN_EXPIRY_KEY = 'vkit_admin_expiry';
+
+function getAuthToken(){ return adminAccessToken || SUPABASE_ANON_KEY; }
+
+function saveTokens(access, refresh, expiresIn) {
+  adminAccessToken = access;
+  localStorage.setItem(ADMIN_TOKEN_KEY, access);
+  if(refresh) localStorage.setItem(ADMIN_REFRESH_KEY, refresh);
+  const expiry = Date.now() + (expiresIn || 3600) * 1000;
+  localStorage.setItem(ADMIN_EXPIRY_KEY, String(expiry));
+}
+
+async function tryRestoreSession() {
+  const saved = localStorage.getItem(ADMIN_TOKEN_KEY);
+  const expiry = parseInt(localStorage.getItem(ADMIN_EXPIRY_KEY) || '0');
+  const refresh = localStorage.getItem(ADMIN_REFRESH_KEY);
+  if(!saved) return false;
+
+  // 만료 5분 전이면 refresh 시도
+  if(Date.now() > expiry - 5*60*1000) {
+    if(!refresh) { clearSavedTokens(); return false; }
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method:'POST', headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},
+        body: JSON.stringify({refresh_token: refresh})
+      });
+      const data = await res.json();
+      if(!res.ok) { clearSavedTokens(); return false; }
+      saveTokens(data.access_token, data.refresh_token, data.expires_in);
+      return true;
+    } catch(e) { clearSavedTokens(); return false; }
+  }
+  adminAccessToken = saved;
+  return true;
+}
+
+function clearSavedTokens() {
+  adminAccessToken = null;
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  localStorage.removeItem(ADMIN_REFRESH_KEY);
+  localStorage.removeItem(ADMIN_EXPIRY_KEY);
+}
+
+async function doAdminLogin(){
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  const statusEl = document.getElementById('admin-login-status');
+  if(!email||!password){ statusEl.style.display=''; statusEl.innerHTML='<div class="hint-box danger">이메일과 비밀번호를 입력하세요.</div>'; return; }
+  statusEl.style.display=''; statusEl.innerHTML='<div class="hint-box info">로그인 중...</div>';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error_description || data.message || '로그인 실패');
+    saveTokens(data.access_token, data.refresh_token, data.expires_in);
+    toggleModal('admin-login-modal', false);
+    openUploadModal();
+  } catch(e) { statusEl.innerHTML=`<div class="hint-box danger">❌ ${e.message}</div>`; }
+}
+
+async function openUploadModal(){
+  if(!adminAccessToken) {
+    const restored = await tryRestoreSession();
+    if(!restored) {
+      document.getElementById('admin-login-status').style.display='none';
+      toggleModal('admin-login-modal', true);
+      return;
+    }
+  }
   document.getElementById('up-status').style.display='none';
   document.getElementById('up-submit-btn').disabled=false;
   document.getElementById('up-submit-btn').innerHTML='<i class="ti ti-cloud-upload"></i> 새로 업로드';
@@ -802,7 +908,7 @@ async function uploadImageToStorage(dataUrl, path){
       method: 'POST',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': blob.type,
         'x-upsert': 'true'
       },
@@ -883,7 +989,7 @@ async function doUploadToSupabase(){
       layer_count: layers.length,
       client_layer_count: layers.filter(l=>l.clientEditable).length,
       template_data: JSON.stringify({
-        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl,
+        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl, defaultIllus: adminIllusData, defaultIllusX: adminIllusX, defaultIllusY: adminIllusY, defaultIllusScale: adminIllusScale, defaultIllusRot: adminIllusRot,
         loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
       }),
       thumbnail: thumbUrl,
@@ -895,7 +1001,7 @@ async function doUploadToSupabase(){
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${getAuthToken()}`,
         'Prefer': 'return=representation'
       },
       body: JSON.stringify(payload)
@@ -930,7 +1036,7 @@ async function openLoadFromDBModal(){
   listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-3);font-size:12px">불러오는 중...</div>';
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/templates?select=id,title,description,category,price,canvas_w,canvas_h,created_at&order=created_at.desc`, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getAuthToken()}` }
     });
     const data = await res.json();
     if(!data.length){
@@ -959,7 +1065,7 @@ function closeLoadFromDBModal(){ toggleModal('loaddb-modal', false); }
 async function loadTemplateFromDB(id, title){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${id}&select=template_data,title,description,category,price,tags`, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getAuthToken()}` }
     });
     const data = await res.json();
     if(!data.length) throw new Error('데이터 없음');
@@ -979,6 +1085,7 @@ async function loadTemplateFromDB(id, title){
         bgImage = d.bgImage;
       }
     } else { bgImage = null; }
+    if(d.defaultIllus){adminIllusData=d.defaultIllus;adminIllusX=d.defaultIllusX||0;adminIllusY=d.defaultIllusY||0;adminIllusScale=d.defaultIllusScale||1;adminIllusRot=d.defaultIllusRot||0;}else{adminIllusData=null;}
     localFontData = d.localFontData || {};
     document.getElementById('cw').value = canvasW;
     document.getElementById('ch').value = canvasH;
@@ -1007,7 +1114,7 @@ async function deleteTemplateFromDB(id, title){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${id}`, {
       method: 'DELETE',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getAuthToken()}` }
     });
     if(!res.ok) throw new Error(res.statusText);
     showMsg(`"${title}" 삭제 완료`);
@@ -1051,7 +1158,7 @@ async function doOverwriteToSupabase(){
       layer_count: layers.length,
       client_layer_count: layers.filter(l=>l.clientEditable).length,
       template_data: JSON.stringify({
-        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl,
+        layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl, defaultIllus: adminIllusData, defaultIllusX: adminIllusX, defaultIllusY: adminIllusY, defaultIllusScale: adminIllusScale, defaultIllusRot: adminIllusRot,
         loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
       }),
       thumbnail: thumbUrl,
@@ -1062,7 +1169,7 @@ async function doOverwriteToSupabase(){
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${getAuthToken()}`,
         'Prefer': 'return=representation'
       },
       body: JSON.stringify(payload)

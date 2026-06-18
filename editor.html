@@ -163,7 +163,7 @@ textarea.fctrl{min-height:64px}
 // ── Supabase 설정 ─────────────────────────────────────
 const SUPABASE_URL='https://fvuyimvkozbcnzudxsdp.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2dXlpbXZrb3piY256dWR4c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg0MTAsImV4cCI6MjA5NTgwNDQxMH0.gxl9EGtn8zTHmzzp_8EEKipGCik6t5q5WeU1sHnKW4I';
-const ROLE_LABELS={"mainText":"메인타이틀","subText":"서브타이틀","timeText":"시간","offImage":"OFF이미지","bgObject":"배경오브젝트","date":"날짜","memo":"메모"};const DAYS=["월","화","수","목","금","토","일"];
+const ROLE_LABELS={"mainText":"메인타이틀","subText":"서브타이틀","timeText":"시간","offImage":"OFF이미지","bgObject":"배경오브젝트","date":"날짜","weekRange":"주간날짜","artistId":"작가님 아이디","memo":"메모"};const DAYS=["월","화","수","목","금","토","일"];
 
 // ── URL 파라미터 ──
 const TEMPLATE_ID=new URLSearchParams(location.search).get('template_id');
@@ -231,12 +231,16 @@ async function initEditor(){
     const t=tdata[0];
     const d=JSON.parse(t.template_data);
     layers=d.layers||[];
-    // 방송 ON 기본값: offImage 레이어는 항상 숨김으로 시작
-    layers.forEach(l=>{if(l.isOffImage)l.visible=false;});
     groups=Object.assign({},d.groups||{});
     canvasW=d.canvasW||t.canvas_w||1920;
     canvasH=d.canvasH||t.canvas_h||1080;
     bgData=d.bgImage||null;
+    // defaultIllus: 썸네일용 기본 이미지 — 에디터에선 표시 안 함, 저장값 없을 때만 참고
+    window._defaultIllusData=d.defaultIllus||null;
+    window._defaultIllusX=d.defaultIllusX||0;
+    window._defaultIllusY=d.defaultIllusY||0;
+    window._defaultIllusScale=d.defaultIllusScale||1;
+    window._defaultIllusRot=d.defaultIllusRot||0;
     SK=TRIAL_MODE?'__trial_no_save__':`vkit_${TEMPLATE_ID}_${uid}`;
     (d.loadedFonts||[]).forEach(f=>{if(f.type==='web'&&f.url){const l=document.createElement('link');l.rel='stylesheet';l.href=f.url;document.head.appendChild(l);}});
     document.title=(t.title||'템플릿')+' — Vkit 에디터';
@@ -403,6 +407,10 @@ function buildUI(){
       const dayIdx=g.day?DAYS.indexOf(g.day):-1;
       if(dayIdx>=0&&dayIdx<7){const parts=wd[dayIdx].split('/');l.text=parts[parts.length-1];}
     }
+    if(l.role==='weekRange'){
+      const wr=getWeekRange();
+      l.text=(l._weekRangeFmt||'{range}').replace('{range}',wr.range).replace('{label}',wr.label);
+    }
   });
   render();
   const usedGids=[...new Set(layers.filter(l=>l.group).map(l=>l.group))].filter(gid=>groups[gid]);
@@ -421,6 +429,15 @@ function buildUI(){
 
   // ── 이미지 업로드 ──
   html+=mkIllusCard();
+
+  // ── 전역 편집 섹션 (작가님 아이디, 주간날짜 등) ──
+  const globalEditable=layers.filter(l=>l.clientEditable&&l.type==='text'&&!l.group&&l.role!=='date');
+  if(globalEditable.length){
+    html+='<div class="gcard"><div class="gcard-body">'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px">✏️</span><span style="font-size:10.5px;font-weight:700;color:var(--text-2)">공통 정보 편집</span></div>'+
+      globalEditable.map(l=>mkField(l)).join('')+
+    '</div></div>';
+  }
 
   usedGids.forEach((gid,idx)=>{
     const g=groups[gid];if(!g)return;
@@ -467,7 +484,7 @@ function mkIllusCard(){
         '<div class="crow"><span class="clbl">크기</span><input class="crange" type="range" id="sl-sc" min="5" max="300" value="'+Math.round(illusScale*100)+'" oninput="illusScaleSlider(this.value)"><span class="cval" id="vl-sc">'+Math.round(illusScale*100)+'%</span></div>'+
         '<div class="crow"><span class="clbl">회전</span><input class="crange" type="range" id="sl-rt" min="-180" max="180" value="'+Math.round(illusRot)+'" oninput="illusRotSlider(this.value)"><span class="cval" id="vl-rt">'+Math.round(illusRot)+'°</span></div>'+
       '</div>'+
-      '<div class="ihint">드래그=이동 · 모서리=크기 · ↺=회전</div>'
+      '<div class="ihint">드래그=이동 · 모서리=크기 · ↺=회전<br>방향키=이동 · Alt+방향키=회전/크기 · Shift=10배속</div>'+'<div class="ihint" style="margin-top:4px;color:var(--accent);border-color:rgba(124,90,240,.22)">💡 이미지를 직접 올려주세요<br>판매자 샘플 이미지는 에디터에서 표시되지 않아요</div>'
     :
       '<button onclick="document.getElementById(\'illus-file\').click()" ondrop="onIllusDrop(event)" ondragover="onIllusDragOver(event)" style="width:100%;padding:10px 14px;background:rgba(124,90,240,.07);border:1.5px dashed rgba(124,90,240,.28);border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background=\'rgba(124,90,240,.13)\'" onmouseout="this.style.background=\'rgba(124,90,240,.07)\'">'+
         '+ 이미지 업로드 '+
@@ -549,7 +566,7 @@ function undoC(){
 function loadSave(){
   try{
     const d=JSON.parse(localStorage.getItem(SK)||'null');if(!d)return;
-    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined&&!l.isOffImage)l.visible=sl.visible;}});
+    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;}});
     if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;}
   }catch(e){}
 }
@@ -575,14 +592,11 @@ function applyTrialMode(){
   // PNG 저장 버튼 → 구매 유도로 변경
   const pngBtn=document.querySelector('.tb.tb-primary');
   if(pngBtn){pngBtn.innerHTML='🔒 구매 후 저장 가능';pngBtn.style.background='rgba(123,114,255,.2)';pngBtn.style.color='#7B72FF';pngBtn.style.boxShadow='none';pngBtn.onclick=()=>{location.href='/template-detail.html?id='+TEMPLATE_ID;};}
-  // 마이페이지/로그아웃 버튼 — 비로그인일 때만 로그인하기로 교체
-  const _trialSession=getSession();
-  if(!_trialSession?.access_token){
-    const mpBtn=document.querySelector('a[href="/mypage.html"]');
-    if(mpBtn)mpBtn.remove();
-    const logoutBtn=document.getElementById('editor-logout-btn');
-    if(logoutBtn){logoutBtn.textContent='로그인하기';logoutBtn.style.cssText='background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(123,114,255,.22);font-family:inherit';logoutBtn.onclick=()=>{location.href='/login.html?redirect='+encodeURIComponent(location.href.replace('&trial=true','').replace('trial=true&',''));};}
-  }
+  // 마이페이지/로그아웃 버튼 → 로그인 버튼으로 교체
+  const mpBtn=document.querySelector('a[href="/mypage.html"]');
+  if(mpBtn)mpBtn.remove();
+  const logoutBtn=document.getElementById('editor-logout-btn');
+  if(logoutBtn){logoutBtn.textContent='로그인하기';logoutBtn.style.cssText='background:linear-gradient(135deg,#7B72FF,#A78BFA);color:#fff;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(123,114,255,.22);font-family:inherit';logoutBtn.onclick=()=>{location.href='/login.html?redirect='+encodeURIComponent(location.href.replace('&trial=true','').replace('trial=true&',''));};}
   // 워터마크 추가
   const wm=document.createElement('div');
   wm.id='trial-watermark';
@@ -610,15 +624,7 @@ canvas.addEventListener('dblclick',e=>{
         openGid=l.group;
         document.querySelectorAll('.day-block').forEach(el=>el.classList.remove('open'));
         document.getElementById('db-'+l.group)?.classList.add('open');
-        setTimeout(()=>{
-          const blk=document.getElementById('db-'+l.group);
-          if(blk){
-            // 사이드 패널 스크롤
-            const panel=document.getElementById('sidebar-inner');
-            if(panel){panel.scrollTo({top:blk.offsetTop-8,behavior:'smooth'});}
-            else{blk.scrollIntoView({behavior:'smooth',block:'nearest'});}
-          }
-        },80);
+        setTimeout(()=>{document.getElementById('db-'+l.group)?.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
       }
       openEdit(l.id);return;
     }
@@ -644,7 +650,29 @@ function closeEdit(){
   document.getElementById('edit-ov')?.classList.remove('active');
   const ta=document.getElementById('edit-ta');if(ta)ta.style.display='none';
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEdit();if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undoC();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeEdit();
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undoC();return;}
+  // 일러스트 키보드 조작 (입력창 포커스 중엔 무시)
+  const tag=document.activeElement?.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA')return;
+  if(!illusData)return;
+  const step=e.shiftKey?10:1;
+  if(e.altKey){
+    // Alt+화살표: 회전
+    if(e.key==='ArrowLeft'){e.preventDefault();illusRot-=step;render();drawIllusOv();updSliders();}
+    else if(e.key==='ArrowRight'){e.preventDefault();illusRot+=step;render();drawIllusOv();updSliders();}
+    // Alt+위/아래: 크기
+    else if(e.key==='ArrowUp'){e.preventDefault();illusScale=Math.max(0.02,illusScale+step*0.01);render();drawIllusOv();updSliders();}
+    else if(e.key==='ArrowDown'){e.preventDefault();illusScale=Math.max(0.02,illusScale-step*0.01);render();drawIllusOv();updSliders();}
+  } else {
+    // 화살표: 이동
+    if(e.key==='ArrowLeft'){e.preventDefault();illusX-=step;render();drawIllusOv();}
+    else if(e.key==='ArrowRight'){e.preventDefault();illusX+=step;render();drawIllusOv();}
+    else if(e.key==='ArrowUp'){e.preventDefault();illusY-=step;render();drawIllusOv();}
+    else if(e.key==='ArrowDown'){e.preventDefault();illusY+=step;render();drawIllusOv();}
+  }
+});
 window.addEventListener('resize',initCanvas);
 window.addEventListener('load',()=>{
   // 로그아웃 버튼
