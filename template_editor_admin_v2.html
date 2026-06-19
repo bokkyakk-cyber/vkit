@@ -1084,7 +1084,8 @@ async function doUploadToSupabase(){
     showUpStatus('info', 'DB에 저장 중...');
 
     // 5. 썸네일도 Storage에 업로드
-    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${tempId}/thumb`);
+    const thumbTs = Date.now();
+    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${tempId}/thumb_${thumbTs}`);
 
     // 6. templates 테이블에 저장
     const payload = {
@@ -1256,7 +1257,8 @@ async function doOverwriteToSupabase(){
       const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
       thumbDataUrl = await resizeThumb(fullDataUrl, 1200);
     }
-    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${currentTemplateId}/thumb`);
+    const thumbTs = Date.now();
+    const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${currentTemplateId}/thumb_${thumbTs}`);
 
     const tagsRaw = document.getElementById('up-tags').value.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
