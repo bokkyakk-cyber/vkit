@@ -463,6 +463,9 @@ nav{
   grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
   gap:18px;
 }
+.template-grid.has-portrait{
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+}
 .template-card{
   background:rgba(255,255,255,0.68);
   backdrop-filter:blur(20px) saturate(150%);
@@ -784,6 +787,7 @@ footer{
   .toss-pay-btn{justify-content:center}
   .security-badges{justify-content:flex-start}
   .template-grid{grid-template-columns:1fr}
+  .template-grid.has-portrait{grid-template-columns:repeat(2,1fr)}
   .features-grid{grid-template-columns:1fr 1fr}
   .float-mockup{display:none}
   footer{flex-direction:column;text-align:center}
@@ -1328,6 +1332,8 @@ let allTemplates = [];
 let currentCategory = 'schedule';
 let searchQuery = '';
 
+const PORTRAIT_CATS = ['poster','shorts','menu'];
+
 function filterAndRender() {
   const grid = document.getElementById('template-grid');
   let filtered = allTemplates;
@@ -1344,8 +1350,13 @@ function filterAndRender() {
   }
   if (!filtered.length) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-sub);font-size:14px">검색 결과가 없어요 🥲</div>';
+    grid.classList.remove('has-portrait');
     return;
   }
+  // 세로형 카테고리 여부로 그리드 열 수 조정
+  const isPortrait = filtered.every(t => t.canvas_w && t.canvas_h && t.canvas_h > t.canvas_w)
+    || PORTRAIT_CATS.includes(currentCategory);
+  grid.classList.toggle('has-portrait', isPortrait);
   grid.innerHTML = filtered.map(makeCard).join('');
   document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
 }
