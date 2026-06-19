@@ -408,8 +408,11 @@ function buildUI(){
       if(dayIdx>=0&&dayIdx<7){const parts=wd[dayIdx].split('/');l.text=parts[parts.length-1];}
     }
     if(l.role==='weekRange'){
-      const wr=getWeekRange();
-      l.text=(l._weekRangeFmt||'{range}').replace('{range}',wr.range).replace('{label}',wr.label);
+      const now=new Date(),d=now.getDay();
+      const mon=new Date(now);mon.setDate(now.getDate()-(d===0?6:d-1)+(weekOffset*7));
+      const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+      const fmt=dt=>{const yy=String(dt.getFullYear()).slice(2),mm=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');return yy+'.'+mm+'.'+dd;};
+      l.text=fmt(mon)+' - '+fmt(sun);
     }
   });
   render();
