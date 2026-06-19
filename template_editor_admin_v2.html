@@ -398,6 +398,21 @@ select.prop-ctrl option{background:#fff;color:var(--text-1)}
           <div class="fm-label">태그 (쉼표로 구분)</div>
           <input class="fm-input" id="up-tags" placeholder="예: 방송, 스케줄, 주간">
         </div>
+        <div>
+          <div class="fm-label">썸네일 이미지 <span style="color:var(--text-2);font-weight:400">(없으면 캔버스 자동 캡처)</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="cursor:pointer;flex:1">
+              <div class="fm-input" id="up-thumb-label" style="cursor:pointer;color:var(--text-2);display:flex;align-items:center;gap:6px;padding:7px 10px">
+                <i class="ti ti-photo-up"></i> <span id="up-thumb-name">파일 선택...</span>
+              </div>
+              <input type="file" id="up-thumb-file" accept="image/*" style="display:none" onchange="onThumbFileChange(this)">
+            </label>
+            <button id="up-thumb-clear" style="display:none;background:rgba(220,60,60,.1);border:1px solid rgba(220,60,60,.25);color:#dc3c3c;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:12px;white-space:nowrap" onclick="clearThumbFile()"><i class="ti ti-x"></i></button>
+          </div>
+          <div id="up-thumb-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;border:1px solid rgba(124,90,240,.2)">
+            <img id="up-thumb-img" style="width:100%;display:block;max-height:140px;object-fit:contain;background:#f0eeff">
+          </div>
+        </div>
         <div id="up-status" style="display:none"></div>
       </div>
     </div>
@@ -914,7 +929,7 @@ async function openUploadModal(){
   document.getElementById('up-overwrite-btn').style.display = currentTemplateId ? '' : 'none';
   toggleModal('upload-modal',true);
 }
-function closeUploadModal(){toggleModal('upload-modal',false);}
+function closeUploadModal(){toggleModal('upload-modal',false);clearThumbFile();}
 
 // ── Storage에 이미지 업로드 후 URL 반환 ──────────────
 async function uploadImageToStorage(dataUrl, path){
@@ -981,6 +996,35 @@ async function uploadAllImages(templateId){
   return { layersCopy, bgUrl };
 }
 
+// ── 썸네일 파일 선택 핸들러 ─────────────────────────
+function onThumbFileChange(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('up-thumb-name').textContent = file.name;
+  document.getElementById('up-thumb-clear').style.display = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('up-thumb-img').src = e.target.result;
+    document.getElementById('up-thumb-preview').style.display = '';
+  };
+  reader.readAsDataURL(file);
+}
+function clearThumbFile(){
+  document.getElementById('up-thumb-file').value = '';
+  document.getElementById('up-thumb-name').textContent = '파일 선택...';
+  document.getElementById('up-thumb-clear').style.display = 'none';
+  document.getElementById('up-thumb-preview').style.display = 'none';
+}
+function getThumbDataUrl(){
+  return new Promise(resolve => {
+    const file = document.getElementById('up-thumb-file').files[0];
+    if(!file){ resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
 async function doUploadToSupabase(){
   const title = document.getElementById('up-title').value.trim();
   if(!title){showUpStatus('danger','제목을 입력해주세요.');return;}
@@ -991,9 +1035,13 @@ async function doUploadToSupabase(){
   showUpStatus('info','썸네일 생성 중...');
 
   try {
-    // 1. 썸네일 생성
-    const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
-    const thumbDataUrl = await resizeThumb(fullDataUrl, 1200);
+    // 1. 썸네일 생성 (파일 업로드 우선, 없으면 캔버스 캡처)
+    showUpStatus('info','썸네일 준비 중...');
+    let thumbDataUrl = await getThumbDataUrl();
+    if(!thumbDataUrl){
+      const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
+      thumbDataUrl = await resizeThumb(fullDataUrl, 1200);
+    }
 
     // 2. 태그 파싱
     const tagsRaw = document.getElementById('up-tags').value.trim();
@@ -1174,9 +1222,12 @@ async function doOverwriteToSupabase(){
     // 이미지들 Storage에 업로드 (같은 templateId 경로로 덮어쓰기)
     const { layersCopy, bgUrl } = await uploadAllImages(currentTemplateId);
 
-    showUpStatus('info', '썸네일 생성 중...');
-    const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
-    const thumbDataUrl = await resizeThumb(fullDataUrl, 1200);
+    showUpStatus('info', '썸네일 준비 중...');
+    let thumbDataUrl = await getThumbDataUrl();
+    if(!thumbDataUrl){
+      const fullDataUrl = exportFlatCanvas('image/jpeg', 0.7);
+      thumbDataUrl = await resizeThumb(fullDataUrl, 1200);
+    }
     const thumbUrl = await uploadImageToStorage(thumbDataUrl, `${currentTemplateId}/thumb`);
 
     const tagsRaw = document.getElementById('up-tags').value.trim();
