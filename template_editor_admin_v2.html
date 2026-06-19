@@ -488,8 +488,8 @@ select.prop-ctrl option{background:#fff;color:var(--text-1)}
 </div>
 <script>
 const DAYS=['월','화','수','목','금','토','일'];
-const ROLES=['mainText','subText','timeText','offImage','bgObject','date','memo'];
-const ROLE_LABELS={mainText:'메인타이틀',subText:'서브타이틀',timeText:'시간',offImage:'OFF이미지',bgObject:'배경오브젝트',date:'날짜',memo:'메모'};
+const ROLES=['mainText','subText','timeText','offImage','bgObject','date','weekRange','memo'];
+const ROLE_LABELS={mainText:'메인타이틀',subText:'서브타이틀',timeText:'시간',offImage:'OFF이미지',bgObject:'배경오브젝트',date:'날짜',weekRange:'주간날짜',memo:'메모'};
 const DAY_LAYER_DEFS=[
   {role:'date',     label:'날짜',         type:'text', fontSize:30},
   {role:'subText',  label:'서브타이틀',    type:'text', fontSize:30},
@@ -570,7 +570,35 @@ function addDayGroupInternal(day){
     layers.push(nl);
   });
 }
-function autoFillDates(){const weekDates=getWeekDates();snapshot();let cnt=0;layers.forEach(l=>{if(l.type==='text'&&l.role==='date'&&l.group){const g=groups[l.group];if(g&&g.day){const idx=DAYS.indexOf(g.day);if(idx>=0){l.text=weekDates[idx];cnt++;}}}});renderAll();renderProps();showMsg(`날짜 ${cnt}개 자동입력`);}
+function autoFillDates(){
+  const weekDates=getWeekDates();
+  snapshot();
+  let cnt=0;
+  // date 역할: 그룹의 요일에 맞는 날짜(일) 입력
+  layers.forEach(l=>{
+    if(l.type==='text'&&l.role==='date'&&l.group){
+      const g=groups[l.group];
+      if(g&&g.day){const idx=DAYS.indexOf(g.day);if(idx>=0){l.text=weekDates[idx];cnt++;}}
+    }
+  });
+  // weekRange 역할: 26.06.01 - 26.06.07 형식으로 주간 범위 입력
+  const now=new Date();
+  const d=now.getDay();
+  const mon=new Date(now);
+  mon.setDate(now.getDate()-(d===0?6:d-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const fmt=dt=>{
+    const yy=String(dt.getFullYear()).slice(2);
+    const mm=String(dt.getMonth()+1).padStart(2,'0');
+    const dd=String(dt.getDate()).padStart(2,'0');
+    return `${yy}.${mm}.${dd}`;
+  };
+  const rangeText=`${fmt(mon)} - ${fmt(sun)}`;
+  layers.forEach(l=>{
+    if(l.type==='text'&&l.role==='weekRange'){l.text=rangeText;cnt++;}
+  });
+  renderAll();renderProps();showMsg(`날짜 ${cnt}개 자동입력`);
+}
 function uploadBg(){document.getElementById('bg-file').click();}
 function loadBgFile(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{snapshot();bgImage=ev.target.result;renderAll();renderCanvasPanel();showMsg('배경 업로드됨');};reader.readAsDataURL(file);e.target.value='';}
 function removeBg(){snapshot();bgImage=null;renderAll();renderCanvasPanel();}
@@ -715,7 +743,7 @@ return html;}
 function setProp(key,value){if(!selectedIds.length)return;snapshot();selectedIds.forEach(id=>{const l=layerById(id);if(l)l[key]=value;});renderAll();renderLayers();updateStatus();}
 function setPropDirect(key,value){if(!selectedIds.length)return;snapshot();selectedIds.forEach(id=>{const l=layerById(id);if(l)l[key]=value;});refresh();}
 function setLayerGroup(gid){if(!selectedIds.length)return;snapshot();selectedIds.forEach(id=>{const l=layerById(id);if(l)l.group=gid||null;});refresh();}
-function renderCanvasPanel(){document.getElementById('canvas-panel').innerHTML=`<div class="prop-section"><div class="prop-section-title">캔버스 크기</div><div class="prop-2col"><div class="prop-row"><label class="prop-label">가로 (W)</label><input class="prop-ctrl" type="number" value="${canvasW}" onchange="document.getElementById('cw').value=this.value;resizeCanvas()"></div><div class="prop-row"><label class="prop-label">세로 (H)</label><input class="prop-ctrl" type="number" value="${canvasH}" onchange="document.getElementById('ch').value=this.value;resizeCanvas()"></div></div><div style="display:flex;gap:3px;margin-top:4px;flex-wrap:wrap"><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1080,1080)">1080²</button><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1920,1080)">1920×1080</button><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1080,1920)">1080×1920</button></div></div><div class="prop-section"><div class="prop-section-title">배경 이미지</div><button class="action-btn img-upload-btn" onclick="uploadBg()"><i class="ti ti-photo-scan"></i> 배경 이미지 업로드</button>${bgImage?'<div class="hint-box success" style="margin-top:4px"><i class="ti ti-check"></i> 배경 이미지 설정됨</div>':'<div class="hint-box info" style="margin-top:4px"><i class="ti ti-photo-off"></i> 배경 이미지 없음</div>'}${bgImage?`<button class="action-btn lock-btn is-locked" style="margin-top:5px" onclick="removeBg()"><i class="ti ti-trash"></i> 배경 제거</button>`:''}</div><div class="prop-section"><div class="prop-section-title">📸 샘플 일러스트 (미리보기용)</div><div style="font-size:10.5px;color:var(--text-2);line-height:1.6;margin-bottom:6px">썸네일·미리보기에만 표시돼요. 구매자 에디터에서는 보이지 않아요.</div>${adminIllusData?'<div class="hint-box success" style="margin-top:4px"><i class="ti ti-check"></i> 샘플 이미지 설정됨</div><button class="action-btn lock-btn is-locked" style="margin-top:5px" onclick="clearAdminIllus()"><i class="ti ti-trash"></i> 제거</button>':'<button class="action-btn img-upload-btn" onclick="uploadAdminIllus()"><i class="ti ti-photo"></i> 샘플 이미지 업로드</button>'}</div><div class="prop-section"><div class="prop-section-title">날짜 자동입력</div><div style="font-size:10.5px;color:var(--text-2);line-height:1.6;margin-bottom:6px">이번주 월~일 날짜를 날짜(date) 역할 레이어에 자동 입력합니다.</div><button class="action-btn img-upload-btn" onclick="autoFillDates()"><i class="ti ti-calendar-event"></i> 날짜 자동입력</button></div>`;}
+function renderCanvasPanel(){document.getElementById('canvas-panel').innerHTML=`<div class="prop-section"><div class="prop-section-title">캔버스 크기</div><div class="prop-2col"><div class="prop-row"><label class="prop-label">가로 (W)</label><input class="prop-ctrl" type="number" value="${canvasW}" onchange="document.getElementById('cw').value=this.value;resizeCanvas()"></div><div class="prop-row"><label class="prop-label">세로 (H)</label><input class="prop-ctrl" type="number" value="${canvasH}" onchange="document.getElementById('ch').value=this.value;resizeCanvas()"></div></div><div style="display:flex;gap:3px;margin-top:4px;flex-wrap:wrap"><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1080,1080)">1080²</button><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1920,1080)">1920×1080</button><button class="prop-ctrl" style="cursor:pointer;font-size:10px;flex:none;padding:3px 7px" onclick="setCanvasPreset(1080,1920)">1080×1920</button></div></div><div class="prop-section"><div class="prop-section-title">배경 이미지</div><button class="action-btn img-upload-btn" onclick="uploadBg()"><i class="ti ti-photo-scan"></i> 배경 이미지 업로드</button>${bgImage?'<div class="hint-box success" style="margin-top:4px"><i class="ti ti-check"></i> 배경 이미지 설정됨</div>':'<div class="hint-box info" style="margin-top:4px"><i class="ti ti-photo-off"></i> 배경 이미지 없음</div>'}${bgImage?`<button class="action-btn lock-btn is-locked" style="margin-top:5px" onclick="removeBg()"><i class="ti ti-trash"></i> 배경 제거</button>`:''}</div><div class="prop-section"><div class="prop-section-title">날짜 자동입력</div><div style="font-size:10.5px;color:var(--text-2);line-height:1.6;margin-bottom:6px">날짜(date) 역할 → 요일별 일(日) 입력<br>주간날짜(weekRange) 역할 → 26.06.01 - 26.06.07 형식</div><button class="action-btn img-upload-btn" onclick="autoFillDates()"><i class="ti ti-calendar-event"></i> 날짜 자동입력</button></div>`;}
 function setCanvasPreset(w,h){document.getElementById('cw').value=w;document.getElementById('ch').value=h;resizeCanvas();renderCanvasPanel();}
 
 
