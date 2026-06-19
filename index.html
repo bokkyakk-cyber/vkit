@@ -542,8 +542,9 @@ nav{
   display:flex;align-items:center;justify-content:center;
   transition:background 0.28s;
   z-index:3;
+  pointer-events:none;
 }
-.template-card:hover .thumb-overlay{background:rgba(30,20,80,0.25)}
+.template-card:hover .thumb-overlay{background:rgba(30,20,80,0.25);pointer-events:auto}
 .preview-btn{
   background:rgba(255,255,255,0.95);
   color:var(--violet);
@@ -1127,8 +1128,8 @@ function makeCard(t){
     ? `<div class="thumb-blur-bg" style="background-image:url('${t.thumbnail}')"></div><img src="${t.thumbnail}" alt="${t.title}">`
     : `<div class="thumb-placeholder"><span class="ph-icon">${cat.icon}</span><span class="ph-label">${t.title}</span></div>`;
   const typeBadge = t.delivery_type === 'download'
-    ? `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(30,30,40,0.75);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">📦 파일제공</div>`
-    : `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(124,90,240,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)">✏️ 에디터</div>`;
+    ? `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(30,30,40,0.75);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px);z-index:4;pointer-events:none">📦 파일제공</div>`
+    : `<div class="thumb-badge" style="position:absolute;top:10px;right:10px;background:rgba(124,90,240,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px);z-index:4;pointer-events:none">✏️ 에디터</div>`;
   return `
     <div class="template-card fade-in" data-category="${t.category||'etc'}">
       <div class="template-thumb" style="${t.canvas_w && t.canvas_h ? `aspect-ratio:${t.canvas_w}/${t.canvas_h}` : 'aspect-ratio:16/9'}">
