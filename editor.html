@@ -242,6 +242,8 @@ async function initEditor(){
     const t=tdata[0];
     const d=JSON.parse(t.template_data);
     layers=d.layers||[];
+    // clientEditable 이미지 레이어의 원본 src 보존
+    layers.forEach(l=>{if(l.type==='image'&&l.clientEditable)l._origSrc=l.src;});
     groups=Object.assign({},d.groups||{});
     canvasW=d.canvasW||t.canvas_w||1920;
     canvasH=d.canvasH||t.canvas_h||1080;
@@ -442,6 +444,15 @@ function buildUI(){
   // ── 이미지 업로드 ──
   html+=mkIllusCard();
 
+  // ── 의뢰자 교체 가능 이미지 슬롯 ──
+  const clientImgs=layers.filter(l=>l.clientEditable&&l.type==='image'&&!l.isOffImage);
+  if(clientImgs.length){
+    html+='<div class="gcard"><div class="gcard-body">'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px">🖼️</span><span style="font-size:10.5px;font-weight:700;color:var(--text-2)">이미지 교체</span></div>'+
+      clientImgs.map(l=>mkImgSlot(l)).join('')+
+    '</div></div>';
+  }
+
   // ── 전역 편집 섹션 (작가님 아이디, 주간날짜 등) ──
   const globalEditable=layers.filter(l=>l.clientEditable&&l.type==='text'&&!l.group&&l.role!=='date');
   if(globalEditable.length){
@@ -483,6 +494,38 @@ function toggleDay(gid){
   }
 }
 
+function mkImgSlot(l){
+  const has=!!l._clientSrc;
+  return '<div class="fwrap" style="gap:6px">'+
+    '<div class="flbl">'+esc(l.name||'이미지')+'</div>'+
+    '<div class="illus-drop'+(has?' has':'')+'" onclick="document.getElementById(\'cimg-'+l.id+'\').click()" style="padding:12px 10px;border-radius:10px">'+
+      '<span class="di" style="font-size:18px">'+(has?'✅':'🖼️')+'</span>'+
+      '<span class="dt">'+(has?'교체하려면 클릭':'클릭하여 이미지 업로드')+'</span>'+
+    '</div>'+
+    '<input type="file" id="cimg-'+l.id+'" accept="image/*" style="display:none" onchange="onClientImgLoad(event,\''+l.id+'\')">'+
+    (has?'<button class="ibtn ibtn-d" style="margin-top:2px" onclick="clearClientImg(\''+l.id+'\')">✕ 제거</button>':'')+
+  '</div>';
+}
+function onClientImgLoad(e,id){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    snapC();
+    const l=layers.find(ll=>ll.id===id);if(!l)return;
+    l._clientSrc=ev.target.result;
+    l.src=ev.target.result;
+    render();buildUI();
+  };
+  r.readAsDataURL(f);
+  e.target.value='';
+}
+function clearClientImg(id){
+  snapC();
+  const l=layers.find(ll=>ll.id===id);if(!l)return;
+  l.src=l._origSrc||'';
+  delete l._clientSrc;
+  render();buildUI();
+}
 function mkIllusCard(){
   const has=!!illusData;
   return '<div class="gcard" id="illus-card"><div class="gcard-body">'+
@@ -566,7 +609,9 @@ function clearIllus(){snapC();illusData=null;ovCanvas.style.cursor='default';ren
 function snapC(){
   undoStack.push(JSON.stringify({layers:JSON.parse(JSON.stringify(layers)),il:illusData,ix:illusX,iy:illusY,isc:illusScale,ir:illusRot}));
   if(undoStack.length>40)undoStack.shift();
-  try{localStorage.setItem(SK,JSON.stringify({layers,il:illusData,ix:illusX,iy:illusY,isc:illusScale,ir:illusRot}));}catch(e){}
+  const clientSrcs={};
+  layers.forEach(l=>{if(l._clientSrc)clientSrcs[l.id]=l._clientSrc;});
+  try{localStorage.setItem(SK,JSON.stringify({layers,il:illusData,ix:illusX,iy:illusY,isc:illusScale,ir:illusRot,clientSrcs}));}catch(e){}
 }
 function undoC(){
   if(!undoStack.length)return;
@@ -578,6 +623,7 @@ function loadSave(){
   try{
     const d=JSON.parse(localStorage.getItem(SK)||'null');if(!d)return;
     if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;}});
+    if(d.clientSrcs)Object.entries(d.clientSrcs).forEach(([id,src])=>{const l=layers.find(ll=>ll.id===id);if(l){if(!l._origSrc)l._origSrc=l.src;l._clientSrc=src;l.src=src;}});
     if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;ovCanvas.style.cursor='grab';}
   }catch(e){}
 }
