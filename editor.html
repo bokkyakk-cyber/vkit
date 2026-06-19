@@ -50,9 +50,9 @@ body{background:var(--bg);background-image:radial-gradient(ellipse at 5% 0%,rgba
 #canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;min-height:0}
 #canvas-cont{position:relative;border-radius:var(--r-md);overflow:hidden;box-shadow:var(--gs-lg);border:2px solid var(--gb);flex-shrink:0}
 #tmpl-canvas{display:block}
-#illus-ov{position:absolute;top:0;left:0;pointer-events:all;touch-action:none;z-index:5;cursor:default}
-#sidebar{width:310px;min-width:310px;display:flex;flex-direction:column;overflow:hidden;background:rgba(255,255,255,.42);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1.5px solid var(--gb)}
-#sidebar-inner{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+#illus-ov{position:absolute;top:0;left:0;pointer-events:none;touch-action:none;z-index:5;cursor:default}
+#sidebar{width:310px;min-width:310px;display:flex;flex-direction:column;overflow:hidden;min-height:0;background:rgba(255,255,255,.42);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1.5px solid var(--gb)}
+#sidebar-inner{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
 #sidebar-inner::-webkit-scrollbar{width:3px}
 #sidebar-inner::-webkit-scrollbar-thumb{background:rgba(124,90,240,.18);border-radius:2px}
 #edit-ov{position:absolute;inset:0;pointer-events:none;z-index:10}
@@ -113,7 +113,7 @@ textarea.fctrl{min-height:64px}
   #main{flex-direction:column}
   #canvas-area{flex:none;height:45vh;min-height:200px;padding:10px 10px 6px;overflow:auto}
   #sidebar{width:100%;min-width:auto;flex:1;border-left:none;border-top:1.5px solid var(--gb);overflow:hidden;display:flex;flex-direction:column}
-  #sidebar-inner{flex:1;overflow-y:auto}
+  #sidebar-inner{flex:1;min-height:0;overflow-y:auto}
   .tb span{display:none}
 }
 </style>
@@ -245,6 +245,7 @@ async function initEditor(){
     document.title=(t.title||'템플릿')+' — Vkit 에디터';
     hideLoading();
     if(!TRIAL_MODE)loadSave();
+    layers.forEach(l=>{if(l.isOffImage)l.visible=false;});
     requestAnimationFrame(()=>{initCanvas();buildUI();render();drawIllusOv();updateWeekNav();if(TRIAL_MODE)applyTrialMode();});
   }catch(e){showError('불러오기 실패','템플릿 데이터를 불러오지 못했어요.<br>'+e.message,'새로고침','javascript:location.reload()');}
 }
@@ -363,21 +364,20 @@ function drawIllusOv(){
   ovCtx.restore();
 }
 
-function getEvtPt(e){const r=ovCanvas.getBoundingClientRect();const src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
+function getEvtPt(e){const r=canvas.getBoundingClientRect();const src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
 function illusDown(e){
-  if(!illusData)return;e.preventDefault();
-  ovCanvas.style.cursor='grabbing';
+  if(!illusData)return;
   const{x,y}=getEvtPt(e);const img=gImg(illusData);if(!img)return;
   const s=parseFloat(canvas.dataset.s)||1;
   const iw=img.naturalWidth*illusScale*s,ih=img.naturalHeight*illusScale*s;
   const cx=(illusX+img.naturalWidth*illusScale/2)*s,cy=(illusY+img.naturalHeight*illusScale/2)*s;
   const rot=illusRot*Math.PI/180;
   const rhx=cx-Math.sin(rot)*(ih/2+22),rhy=cy-Math.cos(rot)*(ih/2+22);
-  if(Math.hypot(x-rhx,y-rhy)<14){illusDragMode='rotate';illusDragStart={x,y,rot:illusRot,cx,cy};return;}
+  if(Math.hypot(x-rhx,y-rhy)<14){illusDragMode='rotate';illusDragStart={x,y,rot:illusRot,cx,cy};ovCanvas.style.cursor='grabbing';return;}
   const corners=[[-iw/2,-ih/2],[iw/2,-ih/2],[iw/2,ih/2],[-iw/2,ih/2]];
-  for(const[hx,hy]of corners){const wx=cx+hx*Math.cos(rot)-hy*Math.sin(rot),wy=cy+hx*Math.sin(rot)+hy*Math.cos(rot);if(Math.hypot(x-wx,y-wy)<14){illusDragMode='scale';illusDragStart={x,y,scale:illusScale,cx,cy,hw:Math.abs(hx),hh:Math.abs(hy)};return;}}
+  for(const[hx,hy]of corners){const wx=cx+hx*Math.cos(rot)-hy*Math.sin(rot),wy=cy+hx*Math.sin(rot)+hy*Math.cos(rot);if(Math.hypot(x-wx,y-wy)<14){illusDragMode='scale';illusDragStart={x,y,scale:illusScale,cx,cy,hw:Math.abs(hx),hh:Math.abs(hy)};ovCanvas.style.cursor='grabbing';return;}}
   const dx=x-cx,dy=y-cy;const lx=dx*Math.cos(-rot)-dy*Math.sin(-rot),ly=dx*Math.sin(-rot)+dy*Math.cos(-rot);
-  if(Math.abs(lx)<iw/2&&Math.abs(ly)<ih/2){illusDragMode='move';illusDragStart={x,y,ix:illusX,iy:illusY};}
+  if(Math.abs(lx)<iw/2&&Math.abs(ly)<ih/2){illusDragMode='move';illusDragStart={x,y,ix:illusX,iy:illusY};ovCanvas.style.cursor='grabbing';}
 }
 function illusMove(e){
   if(!illusDragMode)return;e.preventDefault();
@@ -388,8 +388,8 @@ function illusMove(e){
   render();drawIllusOv();updSliders();
 }
 function illusUp(){if(illusDragMode){illusDragMode=null;snapC();}ovCanvas.style.cursor=illusData?'grab':'default';}
-ovCanvas.addEventListener('mousedown',illusDown);ovCanvas.addEventListener('mousemove',illusMove);ovCanvas.addEventListener('mouseup',illusUp);ovCanvas.addEventListener('mouseleave',illusUp);
-ovCanvas.addEventListener('touchstart',illusDown,{passive:false});ovCanvas.addEventListener('touchmove',illusMove,{passive:false});ovCanvas.addEventListener('touchend',illusUp);
+canvas.addEventListener('mousedown',illusDown);canvas.addEventListener('mousemove',illusMove);canvas.addEventListener('mouseup',illusUp);canvas.addEventListener('mouseleave',illusUp);
+canvas.addEventListener('touchstart',illusDown,{passive:false});canvas.addEventListener('touchmove',illusMove,{passive:false});canvas.addEventListener('touchend',illusUp);
 function updSliders(){
   const ss=document.getElementById('sl-sc'),rs=document.getElementById('sl-rt');
   const sv=document.getElementById('vl-sc'),rv=document.getElementById('vl-rt');
