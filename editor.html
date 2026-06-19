@@ -336,10 +336,13 @@ function drawTxt(c2,l){
   const fs=calcFit(l,c2)*s,lh=l.lineHeight||1.3,lns=(l.text||'').split(String.fromCharCode(10));
   c2.font=(l.fontWeight||'400')+' '+fs+"px '"+(l.fontFamily||'Geist')+"'";
   c2.letterSpacing=((l.letterSpacing||0)*s)+'px';
-  c2.fillStyle=l.color||'#fff';c2.textAlign=l.align||'center';c2.textBaseline='middle';
+  c2.textAlign=l.align||'center';c2.textBaseline='middle';
   const tH=lns.length*fs*lh,ly=l.y*s,lh2=l.h*s;
   let sY=l.verticalAlign==='top'?ly+fs*lh*.5:l.verticalAlign==='bottom'?ly+lh2-tH+fs*lh*.5:ly+(lh2-tH)/2+fs*lh*.5;
   let tX=l.align==='left'?(l.x+4)*s:l.align==='right'?(l.x+l.w-4)*s:(l.x+l.w/2)*s;
+  if(l.shadowBlur||l.shadowOffsetX||l.shadowOffsetY){c2.shadowColor=l.shadowColor||'rgba(0,0,0,0.5)';c2.shadowBlur=(l.shadowBlur||0)*s;c2.shadowOffsetX=(l.shadowOffsetX||0)*s;c2.shadowOffsetY=(l.shadowOffsetY||0)*s;}
+  if(l.gradientEnabled&&l.gradientColor1&&l.gradientColor2){const _a=(l.gradientAngle||90)*Math.PI/180;const _dx=Math.cos(_a)*l.w*s/2,_dy=Math.sin(_a)*l.h*s/2;const _cx=(l.x+l.w/2)*s,_cy=(l.y+l.h/2)*s;const _gr=c2.createLinearGradient(_cx-_dx,_cy-_dy,_cx+_dx,_cy+_dy);_gr.addColorStop(0,l.gradientColor1);_gr.addColorStop(1,l.gradientColor2);c2.fillStyle=_gr;}else{c2.fillStyle=l.color||'#fff';}
+  if(l.strokeWidth||l.stroke2Width){c2.shadowColor='transparent';c2.shadowBlur=0;c2.shadowOffsetX=0;c2.shadowOffsetY=0;c2.lineJoin='round';if(l.stroke2Width){c2.strokeStyle=l.stroke2Color||'#000';c2.lineWidth=((l.strokeWidth||0)+(l.stroke2Width||0)*2)*s;lns.forEach((ln,i)=>c2.strokeText(ln,tX,sY+i*fs*lh));}if(l.strokeWidth){c2.strokeStyle=l.strokeColor||'#fff';c2.lineWidth=(l.strokeWidth||0)*s;lns.forEach((ln,i)=>c2.strokeText(ln,tX,sY+i*fs*lh));}}
   lns.forEach((ln,i)=>c2.fillText(ln,tX,sY+i*fs*lh));
   c2.restore();
 }
