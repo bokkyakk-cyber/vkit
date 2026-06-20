@@ -255,6 +255,9 @@ async function initEditor(){
     window._defaultIllusY=d.defaultIllusY||0;
     window._defaultIllusScale=d.defaultIllusScale||1;
     window._defaultIllusRot=d.defaultIllusRot||0;
+    // 에디터 UI 표시 옵션 (없으면 true로 fallback — 구버전 템플릿 호환)
+    window._showIllus = d.showIllus !== false;
+    window._showWeekNav = d.showWeekNav !== false;
     SK=TRIAL_MODE?'__trial_no_save__':`vkit_${TEMPLATE_ID}_${uid}`;
     (d.loadedFonts||[]).forEach(f=>{if(f.type==='web'&&f.url){const l=document.createElement('link');l.rel='stylesheet';l.href=f.url;document.head.appendChild(l);}});
     document.title=(t.title||'템플릿')+' — Vkit 에디터';
@@ -267,6 +270,7 @@ async function initEditor(){
 let undoStack=[];
 let illusData=null,illusX=0,illusY=0,illusScale=1,illusRot=0;
 let illusDragMode=null,illusDragStart={};
+let selImgId=null,imgDragMode=null,imgDragStart={};
 let openGid=null;
 let weekOffset=0;
 
@@ -362,24 +366,31 @@ function render(){
 
 function drawIllusOv(){
   ovCtx.clearRect(0,0,ovCanvas.width,ovCanvas.height);
-  if(!illusData){ovCanvas.classList.remove('active');return;}
+  // 이미지 레이어 핸들은 항상 그림 (illus 없어도)
   ovCanvas.classList.add('active');
-  const img=gImg(illusData);if(!img||!img.complete||!img.naturalWidth)return;
-  const s=parseFloat(canvas.dataset.s)||1;
-  const iw=img.naturalWidth*illusScale*s,ih=img.naturalHeight*illusScale*s;
-  const cx=(illusX+img.naturalWidth*illusScale/2)*s,cy=(illusY+img.naturalHeight*illusScale/2)*s;
-  ovCtx.save();ovCtx.translate(cx,cy);ovCtx.rotate(illusRot*Math.PI/180);
-  ovCtx.strokeStyle='rgba(124,90,240,.7)';ovCtx.lineWidth=2;ovCtx.setLineDash([6,4]);
-  ovCtx.strokeRect(-iw/2,-ih/2,iw,ih);ovCtx.setLineDash([]);
-  [[-iw/2,-ih/2],[iw/2,-ih/2],[iw/2,ih/2],[-iw/2,ih/2]].forEach(([hx,hy])=>{
+  if(illusData){
+    const img=gImg(illusData);if(img&&img.complete&&img.naturalWidth){
+    const s=parseFloat(canvas.dataset.s)||1;
+    const iw=img.naturalWidth*illusScale*s,ih=img.naturalHeight*illusScale*s;
+    const cx=(illusX+img.naturalWidth*illusScale/2)*s,cy=(illusY+img.naturalHeight*illusScale/2)*s;
+    ovCtx.save();ovCtx.translate(cx,cy);ovCtx.rotate(illusRot*Math.PI/180);
+    ovCtx.strokeStyle='rgba(124,90,240,.7)';ovCtx.lineWidth=2;ovCtx.setLineDash([6,4]);
+    ovCtx.strokeRect(-iw/2,-ih/2,iw,ih);ovCtx.setLineDash([]);
+    [[-iw/2,-ih/2],[iw/2,-ih/2],[iw/2,ih/2],[-iw/2,ih/2]].forEach(([hx,hy])=>{
+      ovCtx.fillStyle='#fff';ovCtx.strokeStyle='#7c5af0';ovCtx.lineWidth=2;
+      ovCtx.beginPath();ovCtx.arc(hx,hy,6,0,Math.PI*2);ovCtx.fill();ovCtx.stroke();
+    });
+    ovCtx.beginPath();ovCtx.moveTo(0,-ih/2);ovCtx.lineTo(0,-ih/2-22);ovCtx.strokeStyle='rgba(124,90,240,.5)';ovCtx.lineWidth=1.5;ovCtx.stroke();
     ovCtx.fillStyle='#fff';ovCtx.strokeStyle='#7c5af0';ovCtx.lineWidth=2;
-    ovCtx.beginPath();ovCtx.arc(hx,hy,6,0,Math.PI*2);ovCtx.fill();ovCtx.stroke();
-  });
-  ovCtx.beginPath();ovCtx.moveTo(0,-ih/2);ovCtx.lineTo(0,-ih/2-22);ovCtx.strokeStyle='rgba(124,90,240,.5)';ovCtx.lineWidth=1.5;ovCtx.stroke();
-  ovCtx.fillStyle='#fff';ovCtx.strokeStyle='#7c5af0';ovCtx.lineWidth=2;
-  ovCtx.beginPath();ovCtx.arc(0,-ih/2-22,7,0,Math.PI*2);ovCtx.fill();ovCtx.stroke();
-  ovCtx.fillStyle='#7c5af0';ovCtx.font='bold 11px sans-serif';ovCtx.textAlign='center';ovCtx.textBaseline='middle';ovCtx.fillText('\u21bb',0,-ih/2-22);
-  ovCtx.restore();
+    ovCtx.beginPath();ovCtx.arc(0,-ih/2-22,7,0,Math.PI*2);ovCtx.fill();ovCtx.stroke();
+    ovCtx.fillStyle='#7c5af0';ovCtx.font='bold 11px sans-serif';ovCtx.textAlign='center';ovCtx.textBaseline='middle';ovCtx.fillText('\u21bb',0,-ih/2-22);
+    ovCtx.restore();
+    }
+  }
+  // 선택된 클라이언트 이미지 레이어 핸들
+  drawImgHandles();
+  // 아무것도 없으면 오버레이 비활성
+  if(!illusData&&!selImgId)ovCanvas.classList.remove('active');
 }
 
 function getEvtPt(e){const r=ovCanvas.getBoundingClientRect();const src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
@@ -406,9 +417,172 @@ function illusMove(e){
   else if(illusDragMode==='scale'){const dist=Math.hypot(x-illusDragStart.cx,y-illusDragStart.cy);const orig=Math.hypot(illusDragStart.hw,illusDragStart.hh);illusScale=Math.max(.02,illusDragStart.scale*(dist/orig));}
   render();drawIllusOv();updSliders();
 }
-function illusUp(){if(illusDragMode){illusDragMode=null;snapC();}ovCanvas.style.cursor=illusData?'grab':'default';}
-ovCanvas.addEventListener('mousedown',illusDown);ovCanvas.addEventListener('mousemove',illusMove);ovCanvas.addEventListener('mouseup',illusUp);ovCanvas.addEventListener('mouseleave',illusUp);
-ovCanvas.addEventListener('touchstart',illusDown,{passive:false});ovCanvas.addEventListener('touchmove',illusMove,{passive:false});ovCanvas.addEventListener('touchend',illusUp);
+function illusUp(){if(illusDragMode){illusDragMode=null;snapC();}updateOvCursor();}
+
+// ── 의뢰자 이미지 레이어 핸들 ──────────────────────────────────────
+// 핸들 타입: 'move' | 'nw'|'ne'|'se'|'sw' (비율유지) | 'n'|'s'|'e'|'w' (자유)
+const IMG_CORNER_R=7,IMG_EDGE_R=5;
+function getImgLayer(){return selImgId?layers.find(l=>l.id===selImgId&&l.clientEditable&&l.type==='image'&&l.visible!==false):null;}
+
+function drawImgHandles(){
+  const l=getImgLayer();
+  if(!l)return;
+  const s=parseFloat(canvas.dataset.s)||1;
+  const x=l.x*s,y=l.y*s,w=l.w*s,h=l.h*s;
+  // 점선 테두리
+  ovCtx.save();
+  ovCtx.strokeStyle='rgba(124,90,240,.8)';ovCtx.lineWidth=1.5;ovCtx.setLineDash([5,4]);
+  ovCtx.strokeRect(x,y,w,h);ovCtx.setLineDash([]);
+  // 모서리 핸들 (비율유지 - 원형)
+  const corners=[['nw',x,y],['ne',x+w,y],['se',x+w,y+h],['sw',x,y+h]];
+  corners.forEach(([,cx,cy])=>{
+    ovCtx.fillStyle='#fff';ovCtx.strokeStyle='#7c5af0';ovCtx.lineWidth=2;
+    ovCtx.beginPath();ovCtx.arc(cx,cy,IMG_CORNER_R,0,Math.PI*2);ovCtx.fill();ovCtx.stroke();
+  });
+  // 엣지 핸들 (자유리사이즈 - 사각형)
+  const edges=[['n',x+w/2,y],['s',x+w/2,y+h],['e',x+w,y+h/2],['w',x,y+h/2]];
+  edges.forEach(([,ex,ey])=>{
+    ovCtx.fillStyle='#fff';ovCtx.strokeStyle='#7c5af0';ovCtx.lineWidth=1.5;
+    ovCtx.fillRect(ex-IMG_EDGE_R,ey-IMG_EDGE_R,IMG_EDGE_R*2,IMG_EDGE_R*2);
+    ovCtx.strokeRect(ex-IMG_EDGE_R,ey-IMG_EDGE_R,IMG_EDGE_R*2,IMG_EDGE_R*2);
+  });
+  ovCtx.restore();
+}
+function hitImgHandle(x,y,l){
+  const s=parseFloat(canvas.dataset.s)||1;
+  const lx=l.x*s,ly=l.y*s,lw=l.w*s,lh=l.h*s;
+  const cr=IMG_CORNER_R+3,er=IMG_EDGE_R+3;
+  if(Math.hypot(x-lx,y-ly)<cr)return'nw';
+  if(Math.hypot(x-(lx+lw),y-ly)<cr)return'ne';
+  if(Math.hypot(x-(lx+lw),y-(ly+lh))<cr)return'se';
+  if(Math.hypot(x-lx,y-(ly+lh))<cr)return'sw';
+  if(Math.abs(x-(lx+lw/2))<er&&Math.abs(y-ly)<er)return'n';
+  if(Math.abs(x-(lx+lw/2))<er&&Math.abs(y-(ly+lh))<er)return's';
+  if(Math.abs(x-(lx+lw))<er&&Math.abs(y-(ly+lh/2))<er)return'e';
+  if(Math.abs(x-lx)<er&&Math.abs(y-(ly+lh/2))<er)return'w';
+  if(x>=lx&&x<=lx+lw&&y>=ly&&y<=ly+lh)return'move';
+  return null;
+}
+function hitAnyClientImg(x,y){
+  const s=parseFloat(canvas.dataset.s)||1;
+  for(let i=layers.length-1;i>=0;i--){
+    const l=layers[i];
+    if(!l.clientEditable||l.type!=='image'||l.visible===false||!l.src)continue;
+    const lx=l.x*s,ly=l.y*s;
+    if(x>=lx&&x<=lx+l.w*s&&y>=ly&&y<=ly+l.h*s)return l;
+  }
+  return null;
+}
+function updateOvCursor(){
+  const l=getImgLayer();
+  if(l){
+    ovCanvas.style.cursor='default';return;
+  }
+  ovCanvas.style.cursor=illusData?'grab':'default';
+}
+function imgDown(e){
+  const{x,y}=getEvtPt(e);
+  const l=getImgLayer();
+  if(l){
+    const hit=hitImgHandle(x,y,l);
+    if(hit){
+      e.preventDefault();
+      const s=parseFloat(canvas.dataset.s)||1;
+      imgDragMode=hit;
+      imgDragStart={x,y,lx:l.x,ly:l.y,lw:l.w,lh:l.h,ar:l.w/l.h};
+      return;
+    }
+  }
+  // 다른 clientEditable 이미지 클릭 시 선택
+  const hit2=hitAnyClientImg(x,y);
+  if(hit2){
+    e.preventDefault();
+    selImgId=hit2.id;
+    imgDragMode='move';
+    imgDragStart={x,y,lx:hit2.x,ly:hit2.y,lw:hit2.w,lh:hit2.h,ar:hit2.w/hit2.h};
+    drawIllusOv();return;
+  }
+  // 빈 곳 클릭 → 선택 해제
+  if(selImgId){selImgId=null;imgDragMode=null;drawIllusOv();}
+}
+function imgMove(e){
+  if(!imgDragMode)return;
+  e.preventDefault();
+  const{x,y}=getEvtPt(e);
+  const s=parseFloat(canvas.dataset.s)||1;
+  const l=getImgLayer();if(!l)return;
+  const dx=(x-imgDragStart.x)/s,dy=(y-imgDragStart.y)/s;
+  const mode=imgDragMode;
+  if(mode==='move'){l.x=Math.round(imgDragStart.lx+dx);l.y=Math.round(imgDragStart.ly+dy);}
+  else{
+    const isCorner=['nw','ne','se','sw'].includes(mode);
+    let nw=imgDragStart.lw,nh=imgDragStart.lh,nx=imgDragStart.lx,ny=imgDragStart.ly;
+    if(isCorner){
+      // 모서리: 비율 유지 — 대각선 이동량으로 스케일
+      let delta;
+      if(mode==='se')delta=(dx+dy)/2;
+      else if(mode==='sw')delta=(-dx+dy)/2;
+      else if(mode==='nw')delta=(-dx-dy)/2;
+      else delta=(dx-dy)/2;
+      const ratio=Math.max(0.01,(imgDragStart.lw+delta*2)/imgDragStart.lw);
+      nw=Math.max(10,Math.round(imgDragStart.lw*ratio));
+      nh=Math.max(10,Math.round(imgDragStart.lh*ratio));
+      // 앵커: 반대편 모서리 고정
+      if(mode==='nw'){nx=imgDragStart.lx+imgDragStart.lw-nw;ny=imgDragStart.ly+imgDragStart.lh-nh;}
+      else if(mode==='ne'){ny=imgDragStart.ly+imgDragStart.lh-nh;}
+      else if(mode==='sw'){nx=imgDragStart.lx+imgDragStart.lw-nw;}
+      // se: 좌상단 고정
+    } else {
+      // 엣지: 자유
+      if(mode==='e')nw=Math.max(10,Math.round(imgDragStart.lw+dx));
+      else if(mode==='w'){nw=Math.max(10,Math.round(imgDragStart.lw-dx));nx=imgDragStart.lx+imgDragStart.lw-nw;}
+      else if(mode==='s')nh=Math.max(10,Math.round(imgDragStart.lh+dy));
+      else if(mode==='n'){nh=Math.max(10,Math.round(imgDragStart.lh-dy));ny=imgDragStart.ly+imgDragStart.lh-nh;}
+    }
+    l.x=Math.round(nx);l.y=Math.round(ny);l.w=nw;l.h=nh;
+  }
+  // 커서
+  const cursors={move:'grabbing',nw:'nw-resize',ne:'ne-resize',se:'se-resize',sw:'sw-resize',n:'n-resize',s:'s-resize',e:'e-resize',w:'w-resize'};
+  ovCanvas.style.cursor=cursors[mode]||'default';
+  render();drawIllusOv();
+}
+function imgUp(){
+  if(imgDragMode){imgDragMode=null;snapC();}
+  updateOvCursor();
+}
+
+// ── 통합 ovCanvas 이벤트 ──────────────────────────────────────────
+function ovDown(e){
+  // 이미지 레이어가 선택된 상태이거나 클릭 위치에 이미지 있으면 imgDown 우선
+  const{x,y}=getEvtPt(e);
+  const selL=getImgLayer();
+  if(selL&&hitImgHandle(x,y,selL)){imgDown(e);return;}
+  const hit=hitAnyClientImg(x,y);
+  if(hit){imgDown(e);return;}
+  // 선택 해제 후 illus 처리
+  if(selImgId){selImgId=null;imgDragMode=null;drawIllusOv();}
+  illusDown(e);
+}
+function ovMove(e){
+  if(imgDragMode){imgMove(e);return;}
+  illusMove(e);
+  // 커서 힌트 (드래그 없을 때)
+  if(!illusDragMode){
+    const{x,y}=getEvtPt(e);
+    const l=getImgLayer();
+    if(l){
+      const hit=hitImgHandle(x,y,l);
+      const cursors={move:'grab',nw:'nw-resize',ne:'ne-resize',se:'se-resize',sw:'sw-resize',n:'n-resize',s:'s-resize',e:'e-resize',w:'w-resize'};
+      ovCanvas.style.cursor=hit?cursors[hit]:'default';
+    } else {
+      const hit2=hitAnyClientImg(x,y);
+      ovCanvas.style.cursor=hit2?'grab':(illusData?'grab':'default');
+    }
+  }
+}
+function ovUp(e){if(imgDragMode){imgUp();return;}illusUp();}
+ovCanvas.addEventListener('mousedown',ovDown);ovCanvas.addEventListener('mousemove',ovMove);ovCanvas.addEventListener('mouseup',ovUp);ovCanvas.addEventListener('mouseleave',ovUp);
+ovCanvas.addEventListener('touchstart',ovDown,{passive:false});ovCanvas.addEventListener('touchmove',ovMove,{passive:false});ovCanvas.addEventListener('touchend',ovUp);
 function updSliders(){
   const ss=document.getElementById('sl-sc'),rs=document.getElementById('sl-rt');
   const sv=document.getElementById('vl-sc'),rv=document.getElementById('vl-rt');
@@ -436,8 +610,9 @@ function buildUI(){
   let html='';
 
   // ── 주 선택 (사이드바 상단) ──
-  const wr=getWeekRange();
-  html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 2px">
+  if(window._showWeekNav !== false){
+    const wr=getWeekRange();
+    html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 2px">
     <button class="wnav-btn" onclick="changeWeek(-1)" id="btn-prev-week" ${weekOffset<=0?'disabled':''} style="width:30px;height:30px;border-radius:8px">‹</button>
     <div style="flex:1;text-align:center">
       <div style="font-size:12px;font-weight:700;color:var(--text-2)">${wr.label}</div>
@@ -445,9 +620,12 @@ function buildUI(){
     </div>
     <button class="wnav-btn" onclick="changeWeek(1)" id="btn-next-week" ${weekOffset>=2?'disabled':''} style="width:30px;height:30px;border-radius:8px">›</button>
   </div>`;
+  }
 
   // ── 이미지 업로드 ──
-  html+=mkIllusCard();
+  if(window._showIllus !== false){
+    html+=mkIllusCard();
+  }
 
   // ── 의뢰자 교체 가능 이미지 슬롯 ──
   const clientImgs=layers.filter(l=>l.clientEditable&&l.type==='image'&&!l.isOffImage);
@@ -507,7 +685,8 @@ function mkImgSlot(l){
       '<span class="di" style="font-size:18px">'+(has?'✅':'🖼️')+'</span>'+
       '<span class="dt">'+(has?'교체하려면 클릭':'클릭하여 이미지 업로드')+'</span>'+
     '</div>'+
-    '<input type="file" id="cimg-'+l.id+'" accept="image/*" style="display:none" onchange="onClientImgLoad(event,\''+l.id+'\')">'+
+    (has?'<div class="ihint" style="font-size:10px">캔버스에서 직접 조작<br>드래그=이동 · ○모서리=비율유지 · □엣지=자유리사이즈</div>':'')+
+    '<input type="file" id="cimg-'+l.id+'" accept="image/*" style="display:none" onchange="onClientImgLoad(event,\''+l.id+'\')">'+ 
     (has?'<button class="ibtn ibtn-d" style="margin-top:2px" onclick="clearClientImg(\''+l.id+'\')">✕ 제거</button>':'')+
   '</div>';
 }
@@ -622,12 +801,13 @@ function undoC(){
   if(!undoStack.length)return;
   const sv=JSON.parse(undoStack.pop());
   layers=sv.layers;illusData=sv.il||null;illusX=sv.ix||0;illusY=sv.iy||0;illusScale=sv.isc||1;illusRot=sv.ir||0;
+  selImgId=null;
   render();drawIllusOv();buildUI();
 }
 function loadSave(){
   try{
     const d=JSON.parse(localStorage.getItem(SK)||'null');if(!d)return;
-    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;}});
+    if(d.layers)d.layers.forEach(sl=>{const l=layers.find(ll=>ll.id===sl.id);if(l){if(sl.text!==undefined)l.text=sl.text;if(sl.visible!==undefined)l.visible=sl.visible;if(l.clientEditable&&l.type==='image'){if(sl.x!==undefined)l.x=sl.x;if(sl.y!==undefined)l.y=sl.y;if(sl.w!==undefined)l.w=sl.w;if(sl.h!==undefined)l.h=sl.h;}}});
     if(d.clientSrcs)Object.entries(d.clientSrcs).forEach(([id,src])=>{const l=layers.find(ll=>ll.id===id);if(l){if(!l._origSrc)l._origSrc=l.src;l._clientSrc=src;l.src=src;}});
     if(d.il){illusData=d.il;illusX=d.ix||0;illusY=d.iy||0;illusScale=d.isc||1;illusRot=d.ir||0;ovCanvas.style.cursor='grab';}
   }catch(e){}

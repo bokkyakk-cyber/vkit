@@ -416,6 +416,19 @@ select.prop-ctrl option{background:#fff;color:var(--text-1)}
           <div class="fm-label">태그 (쉼표로 구분)</div>
           <input class="fm-input" id="up-tags" placeholder="예: 방송, 스케줄, 주간">
         </div>
+        <div>
+          <div class="fm-label">에디터 UI 옵션</div>
+          <div style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:rgba(124,90,240,.05);border:1.5px solid rgba(124,90,240,.12);border-radius:var(--radius)">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-1)">
+              <input type="checkbox" id="up-show-illus" checked style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+              🖼 일러스트 이미지 탭 표시
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-1)">
+              <input type="checkbox" id="up-show-weeknav" checked style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+              📅 날짜 선택 위젯 표시
+            </label>
+          </div>
+        </div>
         <div id="up-status" style="display:none"></div>
       </div>
     </div>
@@ -1040,7 +1053,9 @@ async function doUploadToSupabase(){
       client_layer_count: layers.filter(l=>l.clientEditable).length,
       template_data: JSON.stringify({
         layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl, defaultIllus: adminIllusData, defaultIllusX: adminIllusX, defaultIllusY: adminIllusY, defaultIllusScale: adminIllusScale, defaultIllusRot: adminIllusRot,
-        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
+        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type})),
+        showIllus: document.getElementById('up-show-illus').checked,
+        showWeekNav: document.getElementById('up-show-weeknav').checked,
       }),
       thumbnail: thumbUrl,
       created_at: new Date().toISOString(),
@@ -1213,7 +1228,9 @@ async function doOverwriteToSupabase(){
       client_layer_count: layers.filter(l=>l.clientEditable).length,
       template_data: JSON.stringify({
         layers: layersCopy, groups, canvasW, canvasH, bgImage: bgUrl, defaultIllus: adminIllusData, defaultIllusX: adminIllusX, defaultIllusY: adminIllusY, defaultIllusScale: adminIllusScale, defaultIllusRot: adminIllusRot,
-        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type}))
+        loadedFonts: loadedFonts.map(f=>({name:f.name,url:f.url,type:f.type})),
+        showIllus: document.getElementById('up-show-illus').checked,
+        showWeekNav: document.getElementById('up-show-weeknav').checked,
       }),
       thumbnail: thumbUrl,
     };
