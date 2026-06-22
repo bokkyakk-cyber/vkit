@@ -104,14 +104,18 @@ body{background:var(--bg);background-image:radial-gradient(ellipse at 5% 0%,rgba
 .day-block.open .day-body{display:flex}
 .tog-card{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,.54);border:1.5px solid var(--gb);border-radius:var(--r-sm);box-shadow:var(--gs-sm);transition:all .18s}
 .tog-card.off-on{border-color:rgba(232,64,64,.38);background:rgba(255,215,215,.32)}
+.tog-card.second-on{border-color:rgba(14,165,233,.38);background:rgba(186,230,253,.28)}
 .tl{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px}
 .tl-off{color:var(--danger)}
+.tl-second{color:#0ea5e9}
 .sw-wrap{position:relative;display:inline-block;width:42px;height:23px;cursor:pointer;flex-shrink:0}
 .sw-wrap input{opacity:0;width:0;height:0}
 .sw-sl{position:absolute;inset:0;background:rgba(0,0,0,.12);border-radius:12px;transition:.22s;border:1.5px solid rgba(255,255,255,.45)}
 .sw-sl:before{content:'';position:absolute;width:17px;height:17px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.22s;box-shadow:0 2px 6px rgba(0,0,0,.18)}
 .sw-off input:checked+.sw-sl{background:linear-gradient(135deg,#e84040,#f87171);border-color:transparent;box-shadow:0 3px 10px rgba(232,64,64,.28)}
 .sw-off input:checked+.sw-sl:before{transform:translateX(19px)}
+.sw-second input:checked+.sw-sl{background:linear-gradient(135deg,#0ea5e9,#38bdf8);border-color:transparent;box-shadow:0 3px 10px rgba(14,165,233,.28)}
+.sw-second input:checked+.sw-sl:before{transform:translateX(19px)}
 .fcard{background:rgba(255,255,255,.56);border:1.5px solid var(--gb);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--gs-sm)}
 .fcard-head{padding:8px 12px;background:linear-gradient(135deg,rgba(124,90,240,.1),rgba(179,157,252,.05));border-bottom:1px solid rgba(124,90,240,.1);font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
 .fcard-body{padding:10px;display:flex;flex-direction:column;gap:8px}
@@ -736,8 +740,10 @@ function illusRotSlider(v){illusRot=parseFloat(v);document.getElementById('vl-rt
 function mkDayBody(gid){
   const gLs=layers.filter(l=>l.group===gid);
   const offL=gLs.find(l=>l.isOffImage);
+  const secondLs=gLs.filter(l=>l.isSecondStream);
   const ctLs=gLs.filter(l=>l.clientEditable&&l.type==='text'&&l.role!=='date');
   const isOff=!!(offL&&offL.visible===true);
+  const isSecond=secondLs.length>0&&secondLs.some(l=>l.visible===true);
   let html='';
   if(offL){
     html+='<div class="tog-card'+(isOff?' off-on':'')+'">'+
@@ -745,13 +751,20 @@ function mkDayBody(gid){
       '<label class="sw-wrap sw-off"><input type="checkbox"'+(isOff?' checked':'')+' data-gid="'+gid+'" onchange="toggleOff(this.dataset.gid,this.checked)"><span class="sw-sl"></span></label>'+
     '</div>';
   }
+  if(secondLs.length){
+    html+='<div class="tog-card'+(isSecond?' second-on':'')+'">'+
+      '<span class="tl tl-second">🎬 2회차 방송</span>'+
+      '<label class="sw-wrap sw-second"><input type="checkbox"'+(isSecond?' checked':'')+' data-gid="'+gid+'" onchange="toggleSecond(this.dataset.gid,this.checked)"><span class="sw-sl"></span></label>'+
+    '</div>';
+  }
+  const ctLsFiltered=isOff?[]:isSecond?ctLs:ctLs.filter(l=>!l.isSecondStream);
   if(!isOff&&ctLs.length){
     html+='<div class="fcard">'+
       '<div class="fcard-head">✏ 텍스트 편집</div>'+
       '<div class="fcard-body">'+ctLs.map(l=>mkField(l)).join('')+'</div>'+
     '</div>';
   }
-  if(!offL&&!ctLs.length)html='<div class="empty-p">편집 가능한 항목이 없습니다</div>';
+  if(!offL&&!secondLs.length&&!ctLs.length)html='<div class="empty-p">편집 가능한 항목이 없습니다</div>';
   return html;
 }
 
@@ -772,6 +785,19 @@ function toggleOff(gid,checked){
   const gLs=layers.filter(l=>l.group===gid);
   const offL=gLs.find(l=>l.isOffImage);
   if(offL){offL.visible=checked;if(checked){const idx=layers.indexOf(offL);layers.splice(idx,1);layers.push(offL);}}
+  render();
+  const body=document.querySelector('#db-'+gid+' .day-body');
+  if(body)body.innerHTML=mkDayBody(gid);
+}
+
+function toggleSecond(gid,checked){
+  snapC();
+  const gLs=layers.filter(l=>l.group===gid);
+  const secondLs=gLs.filter(l=>l.isSecondStream);
+  secondLs.forEach(l=>{
+    l.visible=checked;
+    if(checked){const idx=layers.indexOf(l);layers.splice(idx,1);layers.push(l);}
+  });
   render();
   const body=document.querySelector('#db-'+gid+' .day-body');
   if(body)body.innerHTML=mkDayBody(gid);
